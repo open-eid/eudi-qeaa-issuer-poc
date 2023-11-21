@@ -1,0 +1,48 @@
+server:
+  port: 13443
+  error:
+    include-stacktrace: on_param
+  ssl:
+    protocol: TLS
+    enabled-protocols: TLSv1.3
+    bundle: "eudi-issuer"
+
+spring:
+  application:
+    name: eudi-qeaa-issuer-poc
+  ssl:
+    bundle:
+      pem:
+        eudi-issuer:
+          key:
+            alias: eudi-issuer.localhost
+          keystore:
+            certificate: classpath:eudi-issuer.localhost.crt
+            private-key: classpath:eudi-issuer.localhost.key
+          truststore:
+            certificate: classpath:eudi-ca.localhost.crt
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:eudi-issuer
+    username: sa
+    password:
+  main:
+    banner-mode: off
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: configprops,env,health,info
+  info:
+    git:
+      mode: full
+    java:
+      enabled: true
+    os:
+      enabled: true
