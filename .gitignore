@@ -1,5 +1,15 @@
 HELP.md
 target/
+src/main/resources/*.p12
+src/main/resources/*.key
+src/main/resources/*.crt
+src/main/resources/*.csr
+src/main/resources/*.srl
+src/test/resources/*.p12
+src/test/resources/*.key
+src/test/resources/*.crt
+src/test/resources/*.csr
+src/test/resources/*.srl
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

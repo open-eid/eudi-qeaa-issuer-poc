@@ -1,0 +1,141 @@
+version: '3'
+services:
+
+  dozzle:
+    image: amir20/dozzle:latest
+    networks:
+      default:
+        aliases:
+          - dozzle.localhost
+    ports:
+      - "11080:8080"
+    restart: unless-stopped
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  eudi-as:
+    image: eudi-as-mock:latest
+    environment:
+      - spring.ssl.bundle.pem.eudi-as.keystore.certificate=file:/var/certs/eudi-as/eudi-as.localhost.crt
+      - spring.ssl.bundle.pem.eudi-as.keystore.private-key=file:/var/certs/eudi-as/eudi-as.localhost.key
+      - spring.ssl.bundle.pem.eudi-as.truststore.certificate=file:/var/certs/eudi-ca/eudi-ca.localhost.crt
+      - BPL_DEBUG_ENABLED=true
+      - BPL_JVM_THREAD_COUNT=10
+    networks:
+      default:
+        aliases:
+          - eudi-as.localhost
+    ports:
+      - "12000:8000"
+      - "12443:12443"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    volumes:
+      - ./local/tls/eudi-as:/var/certs/eudi-as:ro
+      - ./local/tls/eudi-ca:/var/certs/eudi-ca:ro
+
+  eudi-issuer:
+    image: eudi-qeaa-issuer-poc:latest
+    environment:
+      - spring.ssl.bundle.pem.eudi-issuer.keystore.certificate=file:/var/certs/eudi-issuer/eudi-issuer.localhost.crt
+      - spring.ssl.bundle.pem.eudi-issuer.keystore.private-key=file:/var/certs/eudi-issuer/eudi-issuer.localhost.key
+      - spring.ssl.bundle.pem.eudi-issuer.truststore.certificate=file:/var/certs/eudi-ca/eudi-ca.localhost.crt
+      - BPL_DEBUG_ENABLED=true
+      - BPL_JVM_THREAD_COUNT=10
+    networks:
+      default:
+        aliases:
+          - eudi-issuer.localhost
+    ports:
+      - "13000:8000"
+      - "13443:13443"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    volumes:
+      - ./local/tls/eudi-issuer:/var/certs/eudi-issuer:ro
+      - ./local/tls/eudi-ca:/var/certs/eudi-ca:ro
+
+  eudi-rp:
+    image: eudi-rp-mock:latest
+    environment:
+      - spring.ssl.bundle.pem.eudi-rp.keystore.certificate=file:/var/certs/eudi-rp/eudi-rp.localhost.crt
+      - spring.ssl.bundle.pem.eudi-rp.keystore.private-key=file:/var/certs/eudi-rp/eudi-rp.localhost.key
+      - spring.ssl.bundle.pem.eudi-rp.truststore.certificate=file:/var/certs/eudi-ca/eudi-ca.localhost.crt
+      - spring.ssl.bundle.pem.eudi-issuer.truststore.certificate=file:/var/certs/eudi-issuer/eudi-issuer.localhost.crt
+      - spring.ssl.bundle.pem.eudi-issuer-ca.truststore.certificate=file:/var/certs/eudi-issuer-ca/eudi-ca.localhost.crt
+      - BPL_DEBUG_ENABLED=true
+      - BPL_JVM_THREAD_COUNT=10
+    networks:
+      default:
+        aliases:
+          - eudi-rp.localhost
+    ports:
+      - "14000:8000"
+      - "14443:14443"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    volumes:
+      - ./local/tls/eudi-rp:/var/certs/eudi-rp:ro
+      - ./local/tls/eudi-ca:/var/certs/eudi-ca:ro
+      - ./local/tls/eudi-ca:/var/certs/eudi-issuer-ca:ro
+      - ./local/tls/eudi-issuer:/var/certs/eudi-issuer:ro
+
+  eudi-rp-backend:
+    image: eudi-rp-backend-mock:latest
+    environment:
+      - spring.ssl.bundle.pem.eudi-rp-backend.keystore.certificate=file:/var/certs/eudi-rp-backend/eudi-rp-backend.localhost.crt
+      - spring.ssl.bundle.pem.eudi-rp-backend.keystore.private-key=file:/var/certs/eudi-rp-backend/eudi-rp-backend.localhost.key
+      - spring.ssl.bundle.pem.eudi-rp-backend.truststore.certificate=file:/var/certs/eudi-ca/eudi-ca.localhost.crt
+      - BPL_DEBUG_ENABLED=true
+      - BPL_JVM_THREAD_COUNT=10
+    networks:
+      default:
+        aliases:
+          - eudi-rp-backend.localhost
+    ports:
+      - "15000:8000"
+      - "15443:15443"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    volumes:
+      - ./local/tls/eudi-rp-backend:/var/certs/eudi-rp-backend:ro
+      - ./local/tls/eudi-ca:/var/certs/eudi-ca:ro
+
+  eudi-wallet:
+    image: eudi-wallet-mock:latest
+    environment:
+      - spring.ssl.bundle.pem.eudi-wallet.keystore.certificate=file:/var/certs/eudi-wallet/eudi-wallet.localhost.crt
+      - spring.ssl.bundle.pem.eudi-wallet.keystore.private-key=file:/var/certs/eudi-wallet/eudi-wallet.localhost.key
+      - spring.ssl.bundle.pem.eudi-wallet.truststore.certificate=file:/var/certs/eudi-ca/eudi-ca.localhost.crt
+      - spring.ssl.bundle.pem.eudi-wallet-provider.keystore.certificate=file:/var/certs/eudi-wallet-provider/eudi-wallet-provider.localhost.crt
+      - spring.ssl.bundle.pem.eudi-wallet-provider.keystore.private-key=file:/var/certs/eudi-wallet-provider/eudi-wallet-provider.localhost.key
+      - BPL_DEBUG_ENABLED=true
+      - BPL_JVM_THREAD_COUNT=10
+    networks:
+      default:
+        aliases:
+          - eudi-wallet.localhost
+    ports:
+      - "16000:8000"
+      - "16443:16443"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    volumes:
+      - ./local/tls/eudi-wallet:/var/certs/eudi-wallet:ro
+      - ./local/tls/eudi-wallet-provider:/var/certs/eudi-wallet-provider:ro
+      - ./local/tls/eudi-ca:/var/certs/eudi-ca:ro
