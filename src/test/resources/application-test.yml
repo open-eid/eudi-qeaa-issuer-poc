@@ -1,0 +1,25 @@
+spring:
+  ssl:
+    bundle:
+      pem:
+        eudi-as:
+          key:
+            alias: eudi-as.localhost
+          keystore:
+            certificate: classpath:eudi-as.localhost.crt
+            private-key: classpath:eudi-as.localhost.key
+        eudi-wallet:
+          key:
+            alias: eudi-wallet.localhost
+          keystore:
+            certificate: classpath:eudi-wallet.localhost.crt
+            private-key: classpath:eudi-wallet.localhost.key
+        eudi-wallet-provider:
+          key:
+            alias: eudi-wallet-provider.localhost
+          keystore:
+            certificate: classpath:eudi-wallet-provider.localhost.crt
+            private-key: classpath:eudi-wallet-provider.localhost.key
+        eudi-issuer-ca:
+          truststore:
+            certificate: classpath:eudi-ca.localhost.crt

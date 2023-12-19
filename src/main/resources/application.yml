@@ -28,6 +28,8 @@ spring:
     password:
   main:
     banner-mode: off
+  mvc:
+    log-resolved-exception: false
 
 management:
   endpoint:
@@ -46,3 +48,11 @@ management:
       enabled: true
     os:
       enabled: true
+
+eudi:
+  issuer:
+    base-url: https://eudi-issuer.localhost:13443
+    max-clock-skew: 5s
+    key-proof-expiry-time: 60s
+    dpop-expiry-time: 60s
+    c-nonce-expiry-time: 60s
