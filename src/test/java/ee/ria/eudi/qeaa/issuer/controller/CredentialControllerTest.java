@@ -6,6 +6,7 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
+import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
 import com.nimbusds.jwt.JWTClaimNames;
@@ -35,6 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 
 import java.time.Clock;
@@ -99,7 +101,11 @@ class CredentialControllerTest extends BaseTest {
 
         assertThat(response, notNullValue());
         assertThat(response.format(), equalTo("mso_mdoc"));
+        assertThat(response.credential(), notNullValue());
         assertCNonce(response, accessTokenHash, cNonce);
+        MDoc mDoc = MDoc.Companion.fromCBORHex(response.credential());
+        assertMsoMDoc(mDoc);
+        assertIssuerSignedItems(mDoc);
     }
 
     @Test
@@ -224,7 +230,11 @@ class CredentialControllerTest extends BaseTest {
 
         assertThat(response, notNullValue());
         assertThat(response.format(), equalTo("mso_mdoc"));
+        assertThat(response.credential(), notNullValue());
         assertCNonce(response, accessTokenHash, cNonce);
+        MDoc mDoc = MDoc.Companion.fromCBORHex(response.credential());
+        assertMsoMDoc(mDoc);
+        assertIssuerSignedItems(mDoc);
     }
 
     @Test

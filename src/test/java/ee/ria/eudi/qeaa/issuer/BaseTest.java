@@ -1,5 +1,6 @@
 package ee.ria.eudi.qeaa.issuer;
 
+import COSE.AlgorithmID;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -17,10 +18,21 @@ import ee.ria.eudi.qeaa.issuer.model.CredentialNonce;
 import ee.ria.eudi.qeaa.issuer.model.CredentialRequest;
 import ee.ria.eudi.qeaa.issuer.model.CredentialResponse;
 import ee.ria.eudi.qeaa.issuer.repository.CredentialNonceRepository;
+import id.walt.mdoc.COSECryptoProviderKeyInfo;
+import id.walt.mdoc.SimpleCOSECryptoProvider;
+import id.walt.mdoc.cose.COSESign1;
+import id.walt.mdoc.dataelement.StringElement;
+import id.walt.mdoc.doc.MDoc;
+import id.walt.mdoc.issuersigned.IssuerSigned;
+import id.walt.mdoc.issuersigned.IssuerSignedItem;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
+import kotlinx.datetime.LocalDate;
+import lombok.SneakyThrows;
+import org.bouncycastle.util.encoders.Hex;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,17 +44,37 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.PublicKey;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
+import static ee.ria.eudi.qeaa.issuer.configuration.MDocConfiguration.KEY_ID_ISSUER;
 import static ee.ria.eudi.qeaa.issuer.controller.CredentialController.CREDENTIAL_REQUEST_MAPPING;
+import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.NAMESPACE_ORG_ISO_18013_5_1;
+import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.BIRTH_DATE;
+import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.DOCUMENT_NUMBER;
+import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.DRIVING_PRIVILEGES;
+import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.EXPIRY_DATE;
+import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.FAMILY_NAME;
+import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.GIVEN_NAME;
+import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.ISSUE_DATE;
+import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.ISSUING_AUTHORITY;
+import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.ISSUING_COUNTRY;
+import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.PORTRAIT;
+import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.UN_DISTINGUISHING_SIGN;
 import static io.restassured.config.RedirectConfig.redirectConfig;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -105,6 +137,54 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
         assertThat(newCNonce.getNonce(), equalTo(response.cNonce()));
         assertThat(newCNonce.getIssuedAt(), notNullValue());
         assertThat(newCNonce.getIssuedAt(), greaterThan(cNonce.getIssuedAt()));
+    }
+
+    protected void assertMsoMDoc(MDoc mDoc) {
+        assertThat(mDoc.verifyDocType(), is(true));
+        assertThat(mDoc.verifyValidity(), is(true));
+        assertThat(mDoc.verifyIssuerSignedItems(), is(true));
+        SimpleCOSECryptoProvider issuerCryptoProvider = getIssuerCryptoProvider(mDoc);
+        assertThat(mDoc.verifyCertificate(issuerCryptoProvider, KEY_ID_ISSUER), is(true));
+        assertThat(mDoc.verifySignature(issuerCryptoProvider, KEY_ID_ISSUER), is(true));
+    }
+
+    protected SimpleCOSECryptoProvider getIssuerCryptoProvider(MDoc mDoc) {
+        List<X509Certificate> x5Chain = getX5Chain(mDoc);
+        X509Certificate issuerCert = x5Chain.getFirst();
+        PublicKey publicKey = issuerCert.getPublicKey();
+        COSECryptoProviderKeyInfo issuerKeyInfo = new COSECryptoProviderKeyInfo(KEY_ID_ISSUER,
+            AlgorithmID.ECDSA_256, publicKey, null, x5Chain, issuerTrustedRootCAs);
+        return new SimpleCOSECryptoProvider(List.of(issuerKeyInfo));
+    }
+
+    @SneakyThrows
+    @SuppressWarnings("unchecked")
+    protected List<X509Certificate> getX5Chain(MDoc mDoc) {
+        IssuerSigned issuerSigned = mDoc.getIssuerSigned();
+        COSESign1 issuerAuth = Objects.requireNonNull(issuerSigned.getIssuerAuth());
+        byte[] x5Chain = Objects.requireNonNull(issuerAuth.getX5Chain());
+        ByteArrayInputStream x5CainInputStream = new ByteArrayInputStream(x5Chain);
+        return (List<X509Certificate>) CertificateFactory.getInstance("X509").generateCertificates(x5CainInputStream);
+    }
+
+    @SneakyThrows
+    @SuppressWarnings("unchecked")
+    protected void assertIssuerSignedItems(MDoc mDoc) {
+        List<IssuerSignedItem> issuerSignedItems = mDoc.getIssuerSignedItems(NAMESPACE_ORG_ISO_18013_5_1);
+        Map<String, Object> claims = issuerSignedItems.stream()
+            .collect(Collectors.toMap(i -> i.getElementIdentifier().getValue(), i -> i.getElementValue().getValue()));
+
+        assertThat(claims.get(FAMILY_NAME.toString()), is("Männik"));
+        assertThat(claims.get(GIVEN_NAME.toString()), is("Mari-Liis"));
+        assertThat(claims.get(BIRTH_DATE.toString()), is(LocalDate.Companion.parse("1979-12-24")));
+        assertThat(claims.get(ISSUE_DATE.toString()), is(LocalDate.Companion.parse("2020-12-30")));
+        assertThat(claims.get(EXPIRY_DATE.toString()), is(LocalDate.Companion.parse("2028-12-30")));
+        assertThat(claims.get(ISSUING_COUNTRY.toString()), is("EE"));
+        assertThat(claims.get(ISSUING_AUTHORITY.toString()), is("ARK"));
+        assertThat(claims.get(DOCUMENT_NUMBER.toString()), is("ET000000"));
+        assertThat((List<String>) claims.get(DRIVING_PRIVILEGES.toString()), Matchers.containsInRelativeOrder(new StringElement("A"), new StringElement("B")));
+        assertThat(claims.get(UN_DISTINGUISHING_SIGN.toString()), is("EST"));
+        assertThat(claims.get(PORTRAIT.toString()), is(Hex.decode(subjectPortrait.getContentAsString(StandardCharsets.UTF_8))));
     }
 
     protected CredentialNonce generateMockNonce(String accessTokenHash) {

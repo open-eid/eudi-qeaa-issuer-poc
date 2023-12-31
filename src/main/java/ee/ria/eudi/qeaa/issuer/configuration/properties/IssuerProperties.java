@@ -29,6 +29,13 @@ public record IssuerProperties(
         @NotNull
         @DurationMin(seconds = 1)
         @DurationMax(seconds = 120)
-        Duration maxClockSkew) {
+        @NotNull
+        Duration maxClockSkew,
+        @NotNull
+        Credential credential) {
+
+        public record Credential(
+            Duration validity) {
+        }
     }
 }

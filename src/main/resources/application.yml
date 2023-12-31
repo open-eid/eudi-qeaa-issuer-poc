@@ -21,6 +21,12 @@ spring:
             private-key: classpath:eudi-issuer.localhost.key
           truststore:
             certificate: classpath:eudi-ca.localhost.crt
+  sql:
+    init:
+      mode: embedded
+      platform: h2
+  jpa:
+    defer-datasource-initialization: true
   datasource:
     driver-class-name: org.h2.Driver
     url: jdbc:h2:mem:eudi-issuer
@@ -55,4 +61,6 @@ eudi:
     max-clock-skew: 5s
     key-proof-expiry-time: 60s
     dpop-expiry-time: 60s
-    c-nonce-expiry-time: 60s
+    c-nonce-expiry-time: 7d
+    credential:
+      validity: 7d
