@@ -23,6 +23,7 @@ import ee.ria.eudi.qeaa.issuer.BaseTest;
 import ee.ria.eudi.qeaa.issuer.model.CredentialNonce;
 import ee.ria.eudi.qeaa.issuer.model.CredentialRequest;
 import ee.ria.eudi.qeaa.issuer.model.CredentialResponse;
+import ee.ria.eudi.qeaa.issuer.service.AuthorizationServerMetadataService;
 import ee.ria.eudi.qeaa.issuer.util.AccessTokenUtil;
 import ee.ria.eudi.qeaa.issuer.validation.AccessTokenValidator;
 import ee.ria.eudi.qeaa.issuer.validation.CredentialRequestValidator;
@@ -61,6 +62,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @TestMethodOrder(MethodOrderer.MethodName.class)
 class CredentialControllerTest extends BaseTest {
 
+    @MockBean
+    private AuthorizationServerMetadataService asMetadataService;
     @SpyBean
     private DPoPValidator dPoPValidator;
     @SpyBean
@@ -73,6 +76,8 @@ class CredentialControllerTest extends BaseTest {
     void setUpMockAsMetadata() {
         Issuer issuer = new Issuer("https://eudi-as.localhost");
         AuthorizationServerMetadata asMetadata = new AuthorizationServerMetadata(issuer);
+        Mockito.when(asMetadataService.getMetadata()).thenReturn(asMetadata);
+        Mockito.when(asMetadataService.getJWKSet()).thenReturn(new JWKSet(asSigningKey.toPublicJWK()));
     }
 
     @Test

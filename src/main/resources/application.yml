@@ -71,3 +71,9 @@ eudi:
         - ru
   as:
     base-url: https://eudi-as.localhost:12443
+    metadata:
+      interval: PT24H
+      max-attempts: 1440
+      backoff-delay-milliseconds: 1000
+      backoff-max-delay-milliseconds: 60000
+      backoff-multiplier: 1.1
