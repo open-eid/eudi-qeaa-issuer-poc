@@ -5,8 +5,13 @@ import ee.ria.eudi.qeaa.issuer.configuration.properties.IssuerProperties;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
 
 import java.security.Key;
 import java.security.KeyPair;
@@ -19,8 +24,10 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 @Configuration
+@EnableCaching
 @ConfigurationPropertiesScan
 public class IssuerConfiguration {
 
@@ -46,9 +53,30 @@ public class IssuerConfiguration {
         Certificate[] certificateChain = keyStore.getCertificateChain(bundle.getKey().getAlias());
         return Arrays.stream(certificateChain).map(c -> (X509Certificate) c).toList();
     }
+
     @Bean
     public DefaultDPoPSingleUseChecker dPoPSingleUseChecker(IssuerProperties.Issuer issuer) {
         long ttl = issuer.dPoPExpiryTime().toSeconds() + issuer.maxClockSkew().toSeconds();
         return new DefaultDPoPSingleUseChecker(ttl, ttl); // TODO: Implement db backed version
+    }
+
+    @Bean
+    public MessageSource messageSource(IssuerProperties issuerProperties) {
+        List<Locale> supportedLocales = issuerProperties.issuer().metadata().supportedLocales();
+        ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+        messageSource.setBasename("messages");
+        messageSource.setDefaultEncoding("UTF-8");
+        messageSource.setDefaultLocale(supportedLocales.getFirst());
+        messageSource.setFallbackToSystemLocale(true);
+        return messageSource;
+    }
+
+    @Bean
+    public LocaleResolver localeResolver(IssuerProperties issuerProperties) {
+        List<Locale> supportedLocales = issuerProperties.issuer().metadata().supportedLocales();
+        AcceptHeaderLocaleResolver localeResolver = new AcceptHeaderLocaleResolver();
+        localeResolver.setSupportedLocales(supportedLocales);
+        localeResolver.setDefaultLocale(supportedLocales.getFirst());
+        return localeResolver;
     }
 }

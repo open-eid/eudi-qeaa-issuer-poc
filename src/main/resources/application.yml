@@ -64,3 +64,10 @@ eudi:
     c-nonce-expiry-time: 7d
     credential:
       validity: 7d
+    metadata:
+      supported-locales:
+        - en
+        - et
+        - ru
+  as:
+    base-url: https://eudi-as.localhost:12443
