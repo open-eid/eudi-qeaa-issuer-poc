@@ -1,6 +1,8 @@
 package ee.ria.eudi.qeaa.issuer.service;
 
 import ee.ria.eudi.qeaa.issuer.error.ServiceException;
+import ee.ria.eudi.qeaa.issuer.model.CredentialAttribute;
+import ee.ria.eudi.qeaa.issuer.model.CredentialDoctype;
 import ee.ria.eudi.qeaa.issuer.model.CredentialFormat;
 import ee.ria.eudi.qeaa.issuer.model.ItemToSign;
 import ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence;
@@ -19,19 +21,17 @@ import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
 
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.DOC_TYPE_ORG_ISO_18013_5_1_MDL;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.NAMESPACE_ORG_ISO_18013_5_1;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.BIRTH_DATE;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.DOCUMENT_NUMBER;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.DRIVING_PRIVILEGES;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.EXPIRY_DATE;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.FAMILY_NAME;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.GIVEN_NAME;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.ISSUE_DATE;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.ISSUING_AUTHORITY;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.ISSUING_COUNTRY;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.PORTRAIT;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.UN_DISTINGUISHING_SIGN;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_BIRTH_DATE;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_DOCUMENT_NUMBER;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_DRIVING_PRIVILEGES;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_EXPIRY_DATE;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_FAMILY_NAME;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_GIVEN_NAME;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_ISSUE_DATE;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_ISSUING_AUTHORITY;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_ISSUING_COUNTRY;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_PORTRAIT;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN;
 
 /**
  * The CredentialService class provides an abstraction layer for generating credentials in various formats.
@@ -59,24 +59,24 @@ public class CredentialService {
     private <T> String getMsoMDoc(T subject, TypeMap<T, MobileDrivingLicence> subjectMapper, PublicKey credentialBindingKey) {
         MobileDrivingLicence mobileDrivingLicence = subjectMapper.map(subject);
         List<ItemToSign> itemsToSign = new ArrayList<>();
-        itemsToSign.add(getItemToSign(FAMILY_NAME.toString(), new StringElement(mobileDrivingLicence.getFamilyName())));
-        itemsToSign.add(getItemToSign(GIVEN_NAME.toString(), new StringElement(mobileDrivingLicence.getGivenName())));
-        itemsToSign.add(getItemToSign(BIRTH_DATE.toString(), getFullDateElement(mobileDrivingLicence.getBirthDate())));
-        itemsToSign.add(getItemToSign(ISSUE_DATE.toString(), getFullDateElement(mobileDrivingLicence.getIssueDate())));
-        itemsToSign.add(getItemToSign(EXPIRY_DATE.toString(), getFullDateElement(mobileDrivingLicence.getExpiryDate())));
-        itemsToSign.add(getItemToSign(ISSUING_COUNTRY.toString(), new StringElement(mobileDrivingLicence.getIssuingCountry())));
-        itemsToSign.add(getItemToSign(ISSUING_AUTHORITY.toString(), new StringElement(mobileDrivingLicence.getIssuingAuthority())));
-        itemsToSign.add(getItemToSign(DOCUMENT_NUMBER.toString(), new StringElement(mobileDrivingLicence.getDocumentNumber())));
-        itemsToSign.add(getItemToSign(PORTRAIT.toString(), new ByteStringElement(mobileDrivingLicence.getPortrait())));
-        itemsToSign.add(getItemToSign(DRIVING_PRIVILEGES.toString(), new ListElement(mobileDrivingLicence.getDrivingPrivileges().stream().map(StringElement::new).toList())));
-        itemsToSign.add(getItemToSign(UN_DISTINGUISHING_SIGN.toString(), new StringElement(mobileDrivingLicence.getUnDistinguishingSign())));
-        return mDocService.getMDoc(DOC_TYPE_ORG_ISO_18013_5_1_MDL, itemsToSign, credentialBindingKey).toCBORHex();
+        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_FAMILY_NAME, new StringElement(mobileDrivingLicence.getFamilyName())));
+        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_GIVEN_NAME, new StringElement(mobileDrivingLicence.getGivenName())));
+        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_BIRTH_DATE, getFullDateElement(mobileDrivingLicence.getBirthDate())));
+        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_ISSUE_DATE, getFullDateElement(mobileDrivingLicence.getIssueDate())));
+        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_EXPIRY_DATE, getFullDateElement(mobileDrivingLicence.getExpiryDate())));
+        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_ISSUING_COUNTRY, new StringElement(mobileDrivingLicence.getIssuingCountry())));
+        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_ISSUING_AUTHORITY, new StringElement(mobileDrivingLicence.getIssuingAuthority())));
+        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_DOCUMENT_NUMBER, new StringElement(mobileDrivingLicence.getDocumentNumber())));
+        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_PORTRAIT, new ByteStringElement(mobileDrivingLicence.getPortrait())));
+        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_DRIVING_PRIVILEGES, new ListElement(mobileDrivingLicence.getDrivingPrivileges().stream().map(StringElement::new).toList())));
+        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN, new StringElement(mobileDrivingLicence.getUnDistinguishingSign())));
+        return mDocService.getMDoc(CredentialDoctype.ORG_ISO_18013_5_1_MDL.getUri(), itemsToSign, credentialBindingKey).toCBORHex();
     }
 
-    private ItemToSign getItemToSign(String elementIdentifier, DataElement<?> elementValue) {
+    private ItemToSign getItemToSign(CredentialAttribute credentialAttribute, DataElement<?> elementValue) {
         return ItemToSign.builder()
-            .nameSpace(NAMESPACE_ORG_ISO_18013_5_1)
-            .elementIdentifier(elementIdentifier)
+            .nameSpace(credentialAttribute.getNamespace().getUri())
+            .elementIdentifier(credentialAttribute.getUri())
             .elementValue(elementValue)
             .build();
     }

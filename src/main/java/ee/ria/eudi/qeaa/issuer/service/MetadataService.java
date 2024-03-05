@@ -1,8 +1,8 @@
 package ee.ria.eudi.qeaa.issuer.service;
 
 import ee.ria.eudi.qeaa.issuer.configuration.properties.IssuerProperties;
+import ee.ria.eudi.qeaa.issuer.model.CredentialAttribute;
 import ee.ria.eudi.qeaa.issuer.model.CredentialIssuerMetadata;
-import ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.MessageSource;
@@ -11,11 +11,11 @@ import org.springframework.stereotype.Service;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static ee.ria.eudi.qeaa.issuer.controller.CredentialController.CREDENTIAL_REQUEST_MAPPING;
 import static ee.ria.eudi.qeaa.issuer.controller.CredentialNonceController.CREDENTIAL_NONCE_REQUEST_MAPPING;
@@ -99,17 +99,19 @@ public class MetadataService {
     }
 
     private Map<String, Map<String, Claim>> getSupportedClaims(List<Locale> locales) {
-        Map<String, Claim> mdlClaims = Stream.of(MobileDrivingLicence.SupportedClaims.values())
-            .collect(Collectors.toMap(MobileDrivingLicence.SupportedClaims::toString, claim -> Claim.builder()
-                .mandatory(claim.isMandatory())
-                .display(getClaimDisplayObjects(claim.toString(), locales))
-                .build()));
-        return Map.of("org.iso.18013.5.1", mdlClaims);
+        return Arrays.stream(CredentialAttribute.values())
+            .collect(Collectors.groupingBy(credentialAttribute -> credentialAttribute.getNamespace().getUri(),
+                Collectors.toMap(CredentialAttribute::getUri, attr -> Claim.builder()
+                    .mandatory(attr.isMandatory())
+                    .display(getClaimDisplayObjects(attr, locales))
+                    .build()
+                )
+            ));
     }
 
-    private List<Claim.Display> getClaimDisplayObjects(String claim, List<Locale> locales) {
+    private List<Claim.Display> getClaimDisplayObjects(CredentialAttribute attribute, List<Locale> locales) {
         return locales.stream().map(locale -> Claim.Display.builder()
-            .name(messageSource.getMessage("metadata.issuer.credential.claim." + claim, null, locale))
+            .name(messageSource.getMessage(attribute.getNamespace().getUri() + "." + attribute.getUri(), null, locale))
             .locale(locale.getLanguage())
             .build()).toList();
     }

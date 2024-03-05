@@ -51,8 +51,7 @@ public record CredentialIssuerMetadata(
             String logo,
             String description,
             String backgroundColor,
-            String textColor
-        ) {
+            String textColor) {
         }
 
         @Builder
@@ -65,8 +64,7 @@ public record CredentialIssuerMetadata(
             @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
             public record Display(
                 String name,
-                String locale
-            ) {
+                String locale) {
             }
         }
     }

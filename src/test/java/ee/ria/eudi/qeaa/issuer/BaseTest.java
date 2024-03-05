@@ -14,6 +14,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.id.JWTID;
 import com.nimbusds.openid.connect.sdk.Nonce;
 import ee.ria.eudi.qeaa.issuer.configuration.properties.IssuerProperties;
+import ee.ria.eudi.qeaa.issuer.model.CredentialNamespace;
 import ee.ria.eudi.qeaa.issuer.model.CredentialNonce;
 import ee.ria.eudi.qeaa.issuer.model.CredentialRequest;
 import ee.ria.eudi.qeaa.issuer.model.CredentialResponse;
@@ -58,18 +59,17 @@ import java.util.stream.Collectors;
 
 import static ee.ria.eudi.qeaa.issuer.configuration.MDocConfiguration.KEY_ID_ISSUER;
 import static ee.ria.eudi.qeaa.issuer.controller.CredentialController.CREDENTIAL_REQUEST_MAPPING;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.NAMESPACE_ORG_ISO_18013_5_1;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.BIRTH_DATE;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.DOCUMENT_NUMBER;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.DRIVING_PRIVILEGES;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.EXPIRY_DATE;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.FAMILY_NAME;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.GIVEN_NAME;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.ISSUE_DATE;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.ISSUING_AUTHORITY;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.ISSUING_COUNTRY;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.PORTRAIT;
-import static ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence.SupportedClaims.UN_DISTINGUISHING_SIGN;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_BIRTH_DATE;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_DOCUMENT_NUMBER;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_DRIVING_PRIVILEGES;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_EXPIRY_DATE;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_FAMILY_NAME;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_GIVEN_NAME;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_ISSUE_DATE;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_ISSUING_AUTHORITY;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_ISSUING_COUNTRY;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_PORTRAIT;
+import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN;
 import static io.restassured.config.RedirectConfig.redirectConfig;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -170,21 +170,21 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
     @SneakyThrows
     @SuppressWarnings("unchecked")
     protected void assertIssuerSignedItems(MDoc mDoc) {
-        List<IssuerSignedItem> issuerSignedItems = mDoc.getIssuerSignedItems(NAMESPACE_ORG_ISO_18013_5_1);
+        List<IssuerSignedItem> issuerSignedItems = mDoc.getIssuerSignedItems(CredentialNamespace.ORG_ISO_18013_5_1.getUri());
         Map<String, Object> claims = issuerSignedItems.stream()
             .collect(Collectors.toMap(i -> i.getElementIdentifier().getValue(), i -> i.getElementValue().getValue()));
 
-        assertThat(claims.get(FAMILY_NAME.toString()), is("Männik"));
-        assertThat(claims.get(GIVEN_NAME.toString()), is("Mari-Liis"));
-        assertThat(claims.get(BIRTH_DATE.toString()), is(LocalDate.Companion.parse("1979-12-24")));
-        assertThat(claims.get(ISSUE_DATE.toString()), is(LocalDate.Companion.parse("2020-12-30")));
-        assertThat(claims.get(EXPIRY_DATE.toString()), is(LocalDate.Companion.parse("2028-12-30")));
-        assertThat(claims.get(ISSUING_COUNTRY.toString()), is("EE"));
-        assertThat(claims.get(ISSUING_AUTHORITY.toString()), is("ARK"));
-        assertThat(claims.get(DOCUMENT_NUMBER.toString()), is("ET000000"));
-        assertThat((List<String>) claims.get(DRIVING_PRIVILEGES.toString()), Matchers.containsInRelativeOrder(new StringElement("A"), new StringElement("B")));
-        assertThat(claims.get(UN_DISTINGUISHING_SIGN.toString()), is("EST"));
-        assertThat(claims.get(PORTRAIT.toString()), is(Hex.decode(subjectPortrait.getContentAsString(StandardCharsets.UTF_8))));
+        assertThat(claims.get(ORG_ISO_18013_5_1_FAMILY_NAME.getUri()), is("Männik"));
+        assertThat(claims.get(ORG_ISO_18013_5_1_GIVEN_NAME.getUri()), is("Mari-Liis"));
+        assertThat(claims.get(ORG_ISO_18013_5_1_BIRTH_DATE.getUri()), is(LocalDate.Companion.parse("1979-12-24")));
+        assertThat(claims.get(ORG_ISO_18013_5_1_ISSUE_DATE.getUri()), is(LocalDate.Companion.parse("2020-12-30")));
+        assertThat(claims.get(ORG_ISO_18013_5_1_EXPIRY_DATE.getUri()), is(LocalDate.Companion.parse("2028-12-30")));
+        assertThat(claims.get(ORG_ISO_18013_5_1_ISSUING_COUNTRY.getUri()), is("EE"));
+        assertThat(claims.get(ORG_ISO_18013_5_1_ISSUING_AUTHORITY.getUri()), is("ARK"));
+        assertThat(claims.get(ORG_ISO_18013_5_1_DOCUMENT_NUMBER.getUri()), is("ET000000"));
+        assertThat((List<String>) claims.get(ORG_ISO_18013_5_1_DRIVING_PRIVILEGES.getUri()), Matchers.containsInRelativeOrder(new StringElement("A"), new StringElement("B")));
+        assertThat(claims.get(ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN.getUri()), is("EST"));
+        assertThat(claims.get(ORG_ISO_18013_5_1_PORTRAIT.getUri()), is(Hex.decode(subjectPortrait.getContentAsString(StandardCharsets.UTF_8))));
     }
 
     protected CredentialNonce generateMockNonce(String accessTokenHash) {

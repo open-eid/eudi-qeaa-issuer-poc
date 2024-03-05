@@ -62,6 +62,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @TestMethodOrder(MethodOrderer.MethodName.class)
 class CredentialControllerTest extends BaseTest {
 
+    private final DefaultDPoPSingleUseChecker dPoPSingleUseChecker;
     @MockBean
     private AuthorizationServerMetadataService asMetadataService;
     @SpyBean
@@ -70,7 +71,6 @@ class CredentialControllerTest extends BaseTest {
     private CredentialRequestValidator credentialRequestValidator;
     @SpyBean
     private AccessTokenValidator accessTokenValidator;
-    private final DefaultDPoPSingleUseChecker dPoPSingleUseChecker;
 
     @BeforeEach
     void setUpMockAsMetadata() {
