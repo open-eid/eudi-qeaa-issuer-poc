@@ -57,16 +57,16 @@ public class IssuerTestConfiguration {
     }
 
     public JWSAlgorithm getJwsAlgorithm(Curve curve) {
-        if (curve == Curve.P_256) {
+        if (curve.equals(Curve.P_256)) {
             return JWSAlgorithm.ES256;
-        } else if (curve == Curve.SECP256K1) {
+        } else if (curve.equals(Curve.SECP256K1)) {
             return JWSAlgorithm.ES256K;
-        } else if (curve == Curve.P_384) {
+        } else if (curve.equals(Curve.P_384)) {
             return JWSAlgorithm.ES384;
-        } else if (curve == Curve.P_521) {
+        } else if (curve.equals(Curve.P_521)) {
             return JWSAlgorithm.ES512;
         } else {
-            throw new IllegalArgumentException("Unsupported curve");
+            throw new IllegalArgumentException("Unsupported curve: " + curve.getName());
         }
     }
 }

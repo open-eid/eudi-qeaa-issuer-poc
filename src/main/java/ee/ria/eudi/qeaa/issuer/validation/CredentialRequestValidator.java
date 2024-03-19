@@ -50,7 +50,7 @@ public class CredentialRequestValidator {
             throw new ServiceException(INVALID_CREDENTIAL_REQUEST, "Missing credential request");
         }
         validateRequestedCredentialType(request);
-        return validateJwsKeyProof(request, cNonce, proofIssuer);
+        return validateJwtKeyProof(request, cNonce, proofIssuer);
     }
 
     private void validateRequestedCredentialType(CredentialRequest request) {
@@ -62,16 +62,16 @@ public class CredentialRequestValidator {
         }
     }
 
-    public SignedJWT validateJwsKeyProof(CredentialRequest request, CredentialNonce cNonce, String proofIssuer) {
+    public SignedJWT validateJwtKeyProof(CredentialRequest request, CredentialNonce cNonce, String proofIssuer) {
         try {
             CredentialRequest.Proof proof = validateProof(request);
-            SignedJWT jwsKeyProof = SignedJWT.parse(proof.jwt());
+            SignedJWT jwtKeyProof = SignedJWT.parse(proof.jwt());
             ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
             jwtProcessor.setJWSKeySelector(jwsHeaderKeySelector);
             jwtProcessor.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(new JOSEObjectType(JOSE_TYPE_OPENID4VCI_PROOF_JWT)));
-            jwtProcessor.setJWTClaimsSetVerifier(getClaimsVerifier(cNonce, proofIssuer));
-            jwtProcessor.process(jwsKeyProof, null);
-            return jwsKeyProof;
+            jwtProcessor.setJWTClaimsSetVerifier(getJwtKeyProofClaimsVerifier(cNonce, proofIssuer));
+            jwtProcessor.process(jwtKeyProof, null);
+            return jwtKeyProof;
         } catch (CredentialNonceException ex) {
             throw new CredentialNonceException(generateCredentialNonce(cNonce.getAccessTokenHash()).getNonce(),
                 issuerProperties.issuer().cNonceExpiryTime().toSeconds());
@@ -100,7 +100,7 @@ public class CredentialRequestValidator {
         return proof;
     }
 
-    private JWTClaimsSetVerifier<SecurityContext> getClaimsVerifier(CredentialNonce cNonce, String proofIssuer) {
+    private JWTClaimsSetVerifier<SecurityContext> getJwtKeyProofClaimsVerifier(CredentialNonce cNonce, String proofIssuer) {
         IssuerProperties.Issuer issuer = issuerProperties.issuer();
         return new JwtKeyProofClaimsVerifier(proofIssuer, issuer.baseUrl(), cNonce,
             issuer.keyProofExpiryTime().toSeconds(), issuer.maxClockSkew().toSeconds(), getSystemClock());
