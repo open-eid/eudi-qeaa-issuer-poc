@@ -72,7 +72,6 @@ public class CredentialController {
 
         CredentialNonce cNonce = getCredentialNonce(accessTokenHash);
         return CredentialResponse.builder()
-            .format(MSO_MDOC.name().toLowerCase())
             .credential(credential)
             .cNonce(cNonce.getNonce())
             .cNonceExpiresIn(issuerProperties.issuer().cNonceExpiryTime().toSeconds())

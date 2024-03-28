@@ -105,7 +105,6 @@ class CredentialControllerTest extends BaseTest {
             .as(CredentialResponse.class);
 
         assertThat(response, notNullValue());
-        assertThat(response.format(), equalTo("mso_mdoc"));
         assertThat(response.credential(), notNullValue());
         assertCNonce(response, accessTokenHash, cNonce);
         MDoc mDoc = MDoc.Companion.fromCBORHex(response.credential());
@@ -234,7 +233,6 @@ class CredentialControllerTest extends BaseTest {
             .as(CredentialResponse.class);
 
         assertThat(response, notNullValue());
-        assertThat(response.format(), equalTo("mso_mdoc"));
         assertThat(response.credential(), notNullValue());
         assertCNonce(response, accessTokenHash, cNonce);
         MDoc mDoc = MDoc.Companion.fromCBORHex(response.credential());
