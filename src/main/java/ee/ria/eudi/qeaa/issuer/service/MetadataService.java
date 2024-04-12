@@ -90,7 +90,7 @@ public class MetadataService {
     private List<Display> getCredentialTypeDisplayObjects(List<Locale> locales) {
         return locales.stream().map(locale -> Display.builder()
             .name(messageSource.getMessage("metadata.issuer.credential.name", null, locale))
-            .logo(messageSource.getMessage("metadata.issuer.credential.logo", null, locale))
+            .logo(Display.Logo.builder().uri(messageSource.getMessage("metadata.issuer.credential.logo", null, locale)).build())
             .description(messageSource.getMessage("metadata.issuer.credential.description", null, locale))
             .textColor(messageSource.getMessage("metadata.issuer.credential.text-color", null, locale))
             .backgroundColor(messageSource.getMessage("metadata.issuer.credential.background-color", null, locale))

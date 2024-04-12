@@ -48,11 +48,20 @@ public record CredentialIssuerMetadata(
         public record Display(
             String name,
             String locale,
-            String logo,
+            Logo logo,
             String description,
             String backgroundColor,
             String textColor) {
+
+            @Builder
+            @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+            public record Logo(
+                String uri,
+                String altText
+            ) {
+            }
         }
+
 
         @Builder
         @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
