@@ -28,8 +28,17 @@ import static ee.ria.eudi.qeaa.issuer.error.ErrorCode.INVALID_DPOP_PROOF;
 @RequiredArgsConstructor
 public class DPoPValidator {
     public static final String JOSE_TYPE_DPOP_JWT = "dpop+jwt";
-    private final JwsHeaderKeySelector jwsHeaderKeySelector = new JwsHeaderKeySelector(Set.of(JWSAlgorithm.RS256,
-        JWSAlgorithm.RS384, JWSAlgorithm.RS512, JWSAlgorithm.ES256, JWSAlgorithm.ES384, JWSAlgorithm.ES512));
+    private final JwsHeaderKeySelector jwsHeaderKeySelector = new JwsHeaderKeySelector(Set.of(
+        JWSAlgorithm.RS256,
+        JWSAlgorithm.RS384,
+        JWSAlgorithm.RS512,
+        JWSAlgorithm.ES256,
+        JWSAlgorithm.ES384,
+        JWSAlgorithm.ES512,
+        JWSAlgorithm.PS256,
+        JWSAlgorithm.PS384,
+        JWSAlgorithm.PS512
+    ));
     private final IssuerProperties issuerProperties;
     private final DefaultDPoPSingleUseChecker dPoPSingleUseChecker;
     @Getter

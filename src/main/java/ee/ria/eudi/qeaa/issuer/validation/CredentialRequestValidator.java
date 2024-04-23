@@ -38,8 +38,17 @@ public class CredentialRequestValidator {
     public static final String DOC_TYPE_ISO_18013_MDL = "org.iso.18013.5.1.mDL";
     public static final String JOSE_TYPE_OPENID4VCI_PROOF_JWT = "openid4vci-proof+jwt";
     public static final String PROOF_TYPE_JWT = "jwt";
-    private final JwsHeaderKeySelector jwsHeaderKeySelector = new JwsHeaderKeySelector(Set.of(JWSAlgorithm.RS256,
-        JWSAlgorithm.RS384, JWSAlgorithm.RS512, JWSAlgorithm.ES256, JWSAlgorithm.ES384, JWSAlgorithm.ES512));
+    private final JwsHeaderKeySelector jwsHeaderKeySelector = new JwsHeaderKeySelector(Set.of(
+        JWSAlgorithm.RS256,
+        JWSAlgorithm.RS384,
+        JWSAlgorithm.RS512,
+        JWSAlgorithm.ES256,
+        JWSAlgorithm.ES384,
+        JWSAlgorithm.ES512,
+        JWSAlgorithm.PS256,
+        JWSAlgorithm.PS384,
+        JWSAlgorithm.PS512
+    ));
     private final IssuerProperties issuerProperties;
     private final CredentialNonceRepository credentialNonceRepository;
     @Getter
