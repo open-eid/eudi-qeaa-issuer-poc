@@ -77,7 +77,17 @@ public class MetadataService {
     }
 
     private Map<String, ProofType> getSupportedProofTypes() {
-        return Map.of("jwt", ProofType.builder().proofSigningAlgValuesSupported(List.of("ES256", "ES384", "ES512")).build());
+        return Map.of("jwt", ProofType.builder().proofSigningAlgValuesSupported(List.of(
+            "RS256",
+            "RS384",
+            "RS512",
+            "ES256",
+            "ES384",
+            "ES512",
+            "PS256",
+            "PS384",
+            "PS512"
+        )).build());
     }
 
     private List<CredentialIssuerMetadata.Display> getCredentialIssuerDisplayObjects(List<Locale> locales) {
