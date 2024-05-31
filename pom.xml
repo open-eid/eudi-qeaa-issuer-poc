@@ -81,8 +81,8 @@
         </dependency>
         <dependency>
             <groupId>id.walt</groupId>
-            <artifactId>waltid-mdoc-jvm</artifactId>
-            <version>1.2312081100.0</version>
+            <artifactId>waltid-mdoc-credentials-jvm</artifactId>
+            <version>1.0.2404041616-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.augustcellars.cose</groupId>
