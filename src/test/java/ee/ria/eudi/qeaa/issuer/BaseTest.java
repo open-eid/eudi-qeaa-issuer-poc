@@ -176,9 +176,9 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
 
         assertThat(claims.get(ORG_ISO_18013_5_1_FAMILY_NAME.getUri()), is("Männik"));
         assertThat(claims.get(ORG_ISO_18013_5_1_GIVEN_NAME.getUri()), is("Mari-Liis"));
-        assertThat(claims.get(ORG_ISO_18013_5_1_BIRTH_DATE.getUri()), is(LocalDate.Companion.parse("1979-12-24")));
-        assertThat(claims.get(ORG_ISO_18013_5_1_ISSUE_DATE.getUri()), is(LocalDate.Companion.parse("2020-12-30")));
-        assertThat(claims.get(ORG_ISO_18013_5_1_EXPIRY_DATE.getUri()), is(LocalDate.Companion.parse("2028-12-30")));
+        assertThat(claims.get(ORG_ISO_18013_5_1_BIRTH_DATE.getUri()), is(LocalDate.Companion.parse("1979-12-24", LocalDate.Formats.INSTANCE.getISO())));
+        assertThat(claims.get(ORG_ISO_18013_5_1_ISSUE_DATE.getUri()), is(LocalDate.Companion.parse("2020-12-30", LocalDate.Formats.INSTANCE.getISO())));
+        assertThat(claims.get(ORG_ISO_18013_5_1_EXPIRY_DATE.getUri()), is(LocalDate.Companion.parse("2028-12-30", LocalDate.Formats.INSTANCE.getISO())));
         assertThat(claims.get(ORG_ISO_18013_5_1_ISSUING_COUNTRY.getUri()), is("EE"));
         assertThat(claims.get(ORG_ISO_18013_5_1_ISSUING_AUTHORITY.getUri()), is("ARK"));
         assertThat(claims.get(ORG_ISO_18013_5_1_DOCUMENT_NUMBER.getUri()), is("ET000000"));

@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.2</version>
+        <version>3.3.0</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -72,7 +72,7 @@
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>oauth2-oidc-sdk</artifactId>
-            <version>11.10</version>
+            <version>11.10.1</version>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
@@ -92,7 +92,7 @@
         <dependency>
             <groupId>com.upokecenter</groupId>
             <artifactId>cbor</artifactId>
-            <version>4.5.3</version>
+            <version>4.5.4</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -101,17 +101,17 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk18on</artifactId>
-            <version>1.78</version>
+            <version>1.78.1</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-datetime-jvm</artifactId>
-            <version>0.5.0</version>
+            <version>0.6.0-RC</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-serialization-json</artifactId>
-            <version>1.6.2</version>
+            <version>1.6.3</version>
         </dependency>
         <dependency>
             <groupId>org.modelmapper</groupId>
@@ -165,7 +165,7 @@
             <plugin>
                 <groupId>io.github.git-commit-id</groupId>
                 <artifactId>git-commit-id-maven-plugin</artifactId>
-                <version>7.0.0</version>
+                <version>8.0.2</version>
             </plugin>
         </plugins>
     </build>
