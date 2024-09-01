@@ -47,10 +47,10 @@ public class JwtKeyProofClaimsVerifier extends DefaultJWTClaimsVerifier<Security
 
         Date currentTime = Date.from(systemClock.instant());
         if (!DateUtils.isAfter(claimsSet.getIssueTime(), currentTime, expiryTimeSeconds + maxClockSkewSeconds)) {
-            throw new ServiceException(INVALID_PROOF, "Key Proof expired");
+            throw new ServiceException(INVALID_PROOF, "Key proof expired");
         }
         if (!DateUtils.isBefore(claimsSet.getIssueTime(), currentTime, maxClockSkewSeconds)) {
-            throw new ServiceException(INVALID_PROOF, "Key Proof not yet valid");
+            throw new ServiceException(INVALID_PROOF, "Key proof not yet valid");
         }
         Object nonce = claimsSet.getClaim("nonce");
         long cNonceExpiryTime = Instant.now().getEpochSecond() - cNonce.getIssuedAt().getEpochSecond();

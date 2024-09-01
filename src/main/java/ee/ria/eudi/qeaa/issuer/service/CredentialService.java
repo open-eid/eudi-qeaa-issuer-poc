@@ -1,11 +1,6 @@
 package ee.ria.eudi.qeaa.issuer.service;
 
 import ee.ria.eudi.qeaa.issuer.error.ServiceException;
-import ee.ria.eudi.qeaa.issuer.model.CredentialAttribute;
-import ee.ria.eudi.qeaa.issuer.model.CredentialDoctype;
-import ee.ria.eudi.qeaa.issuer.model.CredentialFormat;
-import ee.ria.eudi.qeaa.issuer.model.ItemToSign;
-import ee.ria.eudi.qeaa.issuer.model.MobileDrivingLicence;
 import id.walt.mdoc.dataelement.ByteStringElement;
 import id.walt.mdoc.dataelement.DEFullDateMode;
 import id.walt.mdoc.dataelement.DataElement;
@@ -21,17 +16,18 @@ import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
 
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_BIRTH_DATE;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_DOCUMENT_NUMBER;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_DRIVING_PRIVILEGES;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_EXPIRY_DATE;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_FAMILY_NAME;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_GIVEN_NAME;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_ISSUE_DATE;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_ISSUING_AUTHORITY;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_ISSUING_COUNTRY;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_PORTRAIT;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN;
+import static ee.ria.eudi.qeaa.issuer.error.ErrorCode.UNSUPPORTED_CREDENTIAL_FORMAT;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_BIRTH_DATE;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_DOCUMENT_NUMBER;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_DRIVING_PRIVILEGES;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_EXPIRY_DATE;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_FAMILY_NAME;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_GIVEN_NAME;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_ISSUE_DATE;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_ISSUING_AUTHORITY;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_ISSUING_COUNTRY;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_PORTRAIT;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN;
 
 /**
  * The CredentialService class provides an abstraction layer for generating credentials in various formats.
@@ -52,7 +48,7 @@ public class CredentialService {
         if (credentialFormat == CredentialFormat.MSO_MDOC) {
             return getMsoMDoc(subject, subjectMapper, credentialBindingKey);
         } else {
-            throw new ServiceException("Unsupported credential format");
+            throw new ServiceException(UNSUPPORTED_CREDENTIAL_FORMAT, "Unsupported credential format");
         }
     }
 

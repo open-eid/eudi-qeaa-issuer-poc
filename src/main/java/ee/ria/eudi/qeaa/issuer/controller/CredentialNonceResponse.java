@@ -1,4 +1,4 @@
-package ee.ria.eudi.qeaa.issuer.model;
+package ee.ria.eudi.qeaa.issuer.controller;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;

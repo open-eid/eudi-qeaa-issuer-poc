@@ -7,9 +7,9 @@ import com.nimbusds.jwt.proc.BadJWTException;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.util.DateUtils;
 import com.nimbusds.oauth2.sdk.dpop.verifiers.DPoPIssuer;
-import com.nimbusds.oauth2.sdk.dpop.verifiers.DefaultDPoPSingleUseChecker;
 import com.nimbusds.oauth2.sdk.id.JWTID;
 import com.nimbusds.oauth2.sdk.util.singleuse.AlreadyUsedException;
+import com.nimbusds.oauth2.sdk.util.singleuse.SingleUseChecker;
 import ee.ria.eudi.qeaa.issuer.error.ServiceException;
 
 import java.time.Clock;
@@ -23,7 +23,7 @@ public class DPoPClaimsVerifier extends DefaultJWTClaimsVerifier<SecurityContext
     private final long expiryTimeSeconds;
     private final long maxClockSkewSeconds;
     private final String accessTokenHash;
-    private final DefaultDPoPSingleUseChecker singleUseChecker;
+    private final SingleUseChecker<Map.Entry<DPoPIssuer, JWTID>> singleUseChecker;
     private final DPoPIssuer dPoPIssuer;
     private final Clock systemClock;
 
@@ -33,7 +33,7 @@ public class DPoPClaimsVerifier extends DefaultJWTClaimsVerifier<SecurityContext
                               long expiryTimeSeconds,
                               long maxClockSkewSeconds,
                               DPoPIssuer dPoPIssuer,
-                              DefaultDPoPSingleUseChecker singleUseChecker,
+                              SingleUseChecker<Map.Entry<DPoPIssuer, JWTID>> singleUseChecker,
                               Clock systemClock) {
         super(new JWTClaimsSet.Builder()
                 .claim("htu", httpUri)

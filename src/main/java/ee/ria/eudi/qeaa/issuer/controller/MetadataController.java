@@ -1,6 +1,6 @@
 package ee.ria.eudi.qeaa.issuer.controller;
 
-import ee.ria.eudi.qeaa.issuer.model.CredentialIssuerMetadata;
+import ee.ria.eudi.qeaa.issuer.service.CredentialIssuerMetadata;
 import ee.ria.eudi.qeaa.issuer.service.MetadataService;
 import ee.ria.eudi.qeaa.issuer.util.RequestUtil;
 import jakarta.servlet.http.HttpServletRequest;

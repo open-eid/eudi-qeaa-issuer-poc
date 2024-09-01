@@ -61,7 +61,7 @@ public class IssuerConfiguration {
     @Bean
     public DefaultDPoPSingleUseChecker dPoPSingleUseChecker(IssuerProperties.Issuer issuer) {
         long ttl = issuer.dPoPExpiryTime().toSeconds() + issuer.maxClockSkew().toSeconds();
-        return new DefaultDPoPSingleUseChecker(ttl, ttl); // TODO: Implement db backed version
+        return new DefaultDPoPSingleUseChecker(ttl, ttl); // TODO: Implement db backed version. Must not be used in load balanced environment.
     }
 
     @Bean

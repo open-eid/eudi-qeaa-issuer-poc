@@ -1,11 +1,16 @@
 package ee.ria.eudi.qeaa.issuer.error;
 
+import ee.ria.eudi.qeaa.issuer.util.ExceptionUtil;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import java.util.Map;
+
+import static ee.ria.eudi.qeaa.issuer.error.ErrorCode.INVALID_REQUEST;
+import static ee.ria.eudi.qeaa.issuer.error.ErrorCode.SERVICE_EXCEPTION;
 
 @Component
 public class ErrorAttributes extends DefaultErrorAttributes {
@@ -18,21 +23,27 @@ public class ErrorAttributes extends DefaultErrorAttributes {
     public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
         Map<String, Object> attr = super.getErrorAttributes(webRequest, options);
         Throwable error = getError(webRequest);
-        if (error instanceof CredentialNonceException credentialNonceException) {
-            setCommonAttributes(attr, credentialNonceException.getErrorCode(), credentialNonceException.getMessage());
-            attr.put(C_NONCE, credentialNonceException.getCNonce());
-            attr.put(C_NONCE_EXPIRES_IN, credentialNonceException.getCNonceExpiresIn());
-        } else if (error instanceof ServiceException serviceException) {
-            setCommonAttributes(attr, serviceException.getErrorCode(), serviceException.getMessage());
-        } else {
-            setCommonAttributes(attr, ErrorCode.SERVICE_EXCEPTION, error.getMessage());
+        switch (error) {
+            case CredentialNonceException ex -> {
+                setCommonAttributes(attr, ex.getErrorCode(), ex.getMessage());
+                attr.put(C_NONCE, ex.getCNonce());
+                attr.put(C_NONCE_EXPIRES_IN, ex.getCNonceExpiresIn());
+            }
+            case ServiceException ex -> setCommonAttributes(attr, ex.getErrorCode(), ex.getMessage());
+            case HandlerMethodValidationException ex ->
+                setCommonAttributes(attr, INVALID_REQUEST, ExceptionUtil.getFirstValidationErrorMessage(ex));
+            default -> setCommonAttributes(attr, SERVICE_EXCEPTION, error.getMessage());
         }
         return attr;
     }
 
     private void setCommonAttributes(Map<String, Object> attr, ErrorCode errorCode, String errorDescription) {
         attr.replace(ERROR_ATTR_ERROR, errorCode.name().toLowerCase());
-        attr.put(ERROR_ATTR_ERROR_DESCRIPTION, errorDescription);
+        if (errorCode == SERVICE_EXCEPTION) {
+            attr.put(ERROR_ATTR_ERROR_DESCRIPTION, "Internal server error");
+        } else {
+            attr.put(ERROR_ATTR_ERROR_DESCRIPTION, errorDescription);
+        }
         attr.remove("message");
     }
 }

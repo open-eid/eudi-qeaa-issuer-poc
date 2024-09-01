@@ -3,6 +3,7 @@ package ee.ria.eudi.qeaa.issuer.configuration.properties;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import lombok.Builder;
 import org.hibernate.validator.constraints.time.DurationMax;
 import org.hibernate.validator.constraints.time.DurationMin;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -42,7 +43,15 @@ public record IssuerProperties(
         Metadata metadata) {
 
         public record Credential(
-            Duration validity) {
+            Duration validity,
+            CredentialEncryption encryption,
+            int maxBatchSize) {
+        }
+
+        @ConfigurationProperties(prefix = "eudi.issuer.credential.encryption")
+        public record CredentialEncryption(boolean required,
+                                           List<String> supportedAlgorithms,
+                                           List<String> supportedEncodings) {
         }
 
         public record Metadata(
@@ -51,6 +60,8 @@ public record IssuerProperties(
         }
     }
 
+    @Builder
+    @ConfigurationProperties(prefix = "eudi.as")
     public record AuthorizationServer(
         @NotBlank
         @Pattern(regexp = ".*(?<!/)$")

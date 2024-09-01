@@ -1,4 +1,4 @@
-package ee.ria.eudi.qeaa.issuer.model;
+package ee.ria.eudi.qeaa.issuer.service;
 
 import id.walt.mdoc.dataelement.DataElement;
 import lombok.Builder;
@@ -7,7 +7,6 @@ import lombok.Builder;
 public record ItemToSign(
     String nameSpace,
     String elementIdentifier,
-    DataElement<?> elementValue
-) {
+    DataElement<?> elementValue) {
 
 }

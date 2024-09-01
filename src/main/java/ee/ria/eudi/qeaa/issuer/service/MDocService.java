@@ -3,7 +3,6 @@ package ee.ria.eudi.qeaa.issuer.service;
 
 import COSE.OneKey;
 import ee.ria.eudi.qeaa.issuer.configuration.properties.IssuerProperties;
-import ee.ria.eudi.qeaa.issuer.model.ItemToSign;
 import id.walt.mdoc.SimpleCOSECryptoProvider;
 import id.walt.mdoc.dataelement.DataElement;
 import id.walt.mdoc.dataelement.MapElement;

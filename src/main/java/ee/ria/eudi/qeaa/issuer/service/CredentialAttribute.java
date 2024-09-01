@@ -1,4 +1,4 @@
-package ee.ria.eudi.qeaa.issuer.model;
+package ee.ria.eudi.qeaa.issuer.service;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
