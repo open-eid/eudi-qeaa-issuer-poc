@@ -1,8 +1,7 @@
 package ee.ria.eudi.qeaa.issuer.service;
 
 import ee.ria.eudi.qeaa.issuer.configuration.properties.IssuerProperties;
-import ee.ria.eudi.qeaa.issuer.model.CredentialAttribute;
-import ee.ria.eudi.qeaa.issuer.model.CredentialIssuerMetadata;
+import ee.ria.eudi.qeaa.issuer.service.CredentialIssuerMetadata.BatchCredentialIssuance;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.MessageSource;
@@ -19,33 +18,52 @@ import java.util.stream.Collectors;
 
 import static ee.ria.eudi.qeaa.issuer.controller.CredentialController.CREDENTIAL_REQUEST_MAPPING;
 import static ee.ria.eudi.qeaa.issuer.controller.CredentialNonceController.CREDENTIAL_NONCE_REQUEST_MAPPING;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialIssuerMetadata.CredentialType.Claim;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialIssuerMetadata.CredentialType.Display;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialIssuerMetadata.CredentialType.ProofType;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialIssuerMetadata.CredentialType.Claim;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialIssuerMetadata.CredentialType.Display;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialIssuerMetadata.CredentialType.ProofType;
 
 @Service
 @RequiredArgsConstructor
 public class MetadataService {
-    private final IssuerProperties issuerProperties;
+    public static final String CREDENTIAL_IDENTIFIER_ORG_ISO_18013_5_1_MDL = "org.iso.18013.5.1.mDL";
+    public static final String DOCTYPE_ORG_ISO_18013_5_1_MDL = "org.iso.18013.5.1.mDL";
+    private final IssuerProperties.Issuer issuerProperties;
+    private final IssuerProperties.AuthorizationServer asProperties;
+    private final IssuerProperties.Issuer.CredentialEncryption encryptionProperties;
     private final MessageSource messageSource;
     private final X509Certificate issuerCert;
 
     @Cacheable("metadata")
     public CredentialIssuerMetadata getMetadata(List<Locale> locales) {
+        BatchCredentialIssuance batchCredentialIssuance = BatchCredentialIssuance.builder()
+            .batchSize(issuerProperties.credential().maxBatchSize())
+            .build();
         return CredentialIssuerMetadata.builder()
-            .credentialIssuer(issuerProperties.issuer().baseUrl())
-            .credentialEndpoint(issuerProperties.issuer().baseUrl() + CREDENTIAL_REQUEST_MAPPING)
-            .credentialNonceEndpoint(issuerProperties.issuer().baseUrl() + CREDENTIAL_NONCE_REQUEST_MAPPING)
+            .credentialIssuer(issuerProperties.baseUrl())
+            .credentialEndpoint(issuerProperties.baseUrl() + CREDENTIAL_REQUEST_MAPPING)
+            .credentialNonceEndpoint(issuerProperties.baseUrl() + CREDENTIAL_NONCE_REQUEST_MAPPING)
+            .batchCredentialIssuance(batchCredentialIssuance)
             .display(getCredentialIssuerDisplayObjects(locales))
             .credentialConfigurationsSupported(getSupportedCredentialConfigurations(locales))
-            .authorizationServers(List.of(issuerProperties.as().baseUrl()))
+            .authorizationServers(List.of(asProperties.baseUrl()))
+            .credentialResponseEncryption(CredentialIssuerMetadata.CredentialResponseEncryption.builder()
+                .required(encryptionProperties.required())
+                .algValuesSupported(encryptionProperties.supportedAlgorithms())
+                .encValuesSupported(encryptionProperties.supportedEncodings())
+                .build())
             .build();
     }
 
+    /**
+     * Returns supported credential configurations for the issuer. If this changes, the corresponding credential request
+     * validator needs to be changed also.
+     *
+     * @see ee.ria.eudi.qeaa.issuer.validation.CredentialRequestValidator
+     */
     private Map<String, CredentialIssuerMetadata.CredentialType> getSupportedCredentialConfigurations(List<Locale> locales) {
-        return Map.of("org.iso.18013.5.1.mDL", CredentialIssuerMetadata.CredentialType.builder()
-            .format("mso_mdoc")
-            .doctype("org.iso.18013.5.1.mDL")
+        return Map.of(CREDENTIAL_IDENTIFIER_ORG_ISO_18013_5_1_MDL, CredentialIssuerMetadata.CredentialType.builder()
+            .format(CredentialFormat.MSO_MDOC.name().toLowerCase())
+            .doctype(DOCTYPE_ORG_ISO_18013_5_1_MDL)
             .cryptographicBindingMethodsSupported(List.of("cose_key"))
             .credentialSigningAlgValuesSupported(List.of(getSupportedSigningAlg()))
             .proofTypesSupported(getSupportedProofTypes())

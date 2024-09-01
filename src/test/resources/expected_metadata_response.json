@@ -1,0 +1,297 @@
+{
+  "credential_issuer": "https://eudi-issuer.localhost:13443",
+  "credential_endpoint": "https://eudi-issuer.localhost:13443/credential",
+  "credential_nonce_endpoint": "https://eudi-issuer.localhost:13443/nonce",
+  "batch_credential_issuance": {
+    "batch_size": 5
+  },
+  "credential_configurations_supported": {
+    "org.iso.18013.5.1.mDL": {
+      "format": "mso_mdoc",
+      "doctype": "org.iso.18013.5.1.mDL",
+      "cryptographic_binding_methods_supported": [
+        "cose_key"
+      ],
+      "credential_signing_alg_values_supported": [
+        "ES256"
+      ],
+      "proof_types_supported": {
+        "jwt": {
+          "proof_signing_alg_values_supported": [
+            "RS256",
+            "RS384",
+            "RS512",
+            "ES256",
+            "ES384",
+            "ES512",
+            "PS256",
+            "PS384",
+            "PS512"
+          ]
+        }
+      },
+      "display": [
+        {
+          "name": "Mobile Driving License",
+          "locale": "en",
+          "logo": {
+            "uri": "https://eudi-issuer.localhost:13443/credential_logo_en.png",
+            "alt_text": null
+          },
+          "description": "Description",
+          "background_color": "#5F5",
+          "text_color": "#282"
+        },
+        {
+          "name": "Mobiilne juhiluba",
+          "locale": "et",
+          "logo": {
+            "uri": "https://eudi-issuer.localhost:13443/credential_logo_et.png",
+            "alt_text": null
+          },
+          "description": "Kirjeldus",
+          "background_color": "#000",
+          "text_color": "#FFF"
+        },
+        {
+          "name": "Мобильное водительское ",
+          "locale": "ru",
+          "logo": {
+            "uri": "https://eudi-issuer.localhost:13443/credential_logo_ru.png",
+            "alt_text": null
+          },
+          "description": "Oписание",
+          "background_color": "#B44",
+          "text_color": "#D88"
+        }
+      ],
+      "claims": {
+        "org.iso.18013.5.1": {
+          "un_distinguishing_sign": {
+            "mandatory": true,
+            "display": [
+              {
+                "name": "UN distinguishing sign",
+                "locale": "en"
+              },
+              {
+                "name": "UN eraldusmärk",
+                "locale": "et"
+              },
+              {
+                "name": "Отличительный знак UN",
+                "locale": "ru"
+              }
+            ]
+          },
+          "driving_privileges": {
+            "mandatory": true,
+            "display": [
+              {
+                "name": "Driving privileges",
+                "locale": "en"
+              },
+              {
+                "name": "Sõiduõigused",
+                "locale": "et"
+              },
+              {
+                "name": "Вождение привилегии",
+                "locale": "ru"
+              }
+            ]
+          },
+          "document_number": {
+            "mandatory": true,
+            "display": [
+              {
+                "name": "Document number",
+                "locale": "en"
+              },
+              {
+                "name": "Dokumendi number",
+                "locale": "et"
+              },
+              {
+                "name": "Номер документа",
+                "locale": "ru"
+              }
+            ]
+          },
+          "issue_date": {
+            "mandatory": true,
+            "display": [
+              {
+                "name": "Issue date",
+                "locale": "en"
+              },
+              {
+                "name": "Kehtivuse algus",
+                "locale": "et"
+              },
+              {
+                "name": "Дата выпуска",
+                "locale": "ru"
+              }
+            ]
+          },
+          "issuing_country": {
+            "mandatory": true,
+            "display": [
+              {
+                "name": "Issuing country",
+                "locale": "en"
+              },
+              {
+                "name": "Väljaandev riik",
+                "locale": "et"
+              },
+              {
+                "name": "Страна_выдачи",
+                "locale": "ru"
+              }
+            ]
+          },
+          "issuing_authority": {
+            "mandatory": true,
+            "display": [
+              {
+                "name": "Issuing authority",
+                "locale": "en"
+              },
+              {
+                "name": "Väljaandev asutus",
+                "locale": "et"
+              },
+              {
+                "name": "Орган выдавший документ",
+                "locale": "ru"
+              }
+            ]
+          },
+          "birth_date": {
+            "mandatory": true,
+            "display": [
+              {
+                "name": "Birthdate",
+                "locale": "en"
+              },
+              {
+                "name": "Sünniaeg",
+                "locale": "et"
+              },
+              {
+                "name": "Дата рождения",
+                "locale": "ru"
+              }
+            ]
+          },
+          "expiry_date": {
+            "mandatory": true,
+            "display": [
+              {
+                "name": "Expiry date",
+                "locale": "en"
+              },
+              {
+                "name": "Kehtivuse lõpp",
+                "locale": "et"
+              },
+              {
+                "name": "Дата истечения срока действия",
+                "locale": "ru"
+              }
+            ]
+          },
+          "given_name": {
+            "mandatory": true,
+            "display": [
+              {
+                "name": "Given Name",
+                "locale": "en"
+              },
+              {
+                "name": "Eesnimi",
+                "locale": "et"
+              },
+              {
+                "name": "Собственное имя",
+                "locale": "ru"
+              }
+            ]
+          },
+          "portrait": {
+            "mandatory": true,
+            "display": [
+              {
+                "name": "Portrait",
+                "locale": "en"
+              },
+              {
+                "name": "Pilt",
+                "locale": "et"
+              },
+              {
+                "name": "Портрет",
+                "locale": "ru"
+              }
+            ]
+          },
+          "family_name": {
+            "mandatory": true,
+            "display": [
+              {
+                "name": "Family Name",
+                "locale": "en"
+              },
+              {
+                "name": "Perekonnanimi",
+                "locale": "et"
+              },
+              {
+                "name": "Фамилия",
+                "locale": "ru"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "credential_response_encryption": {
+    "required": false,
+    "alg_values_supported": [
+      "RSA-OAEP",
+      "RSA-OAEP-256",
+      "ECDH-ES",
+      "ECDH-ES+A128KW",
+      "ECDH-ES+A192KW",
+      "ECDH-ES+A256KW"
+    ],
+    "enc_values_supported": [
+      "A128GCM",
+      "A192GCM",
+      "A256GCM",
+      "A128CBC-HS256",
+      "A192CBC-HS384",
+      "A256CBC-HS512"
+    ]
+  },
+  "display": [
+    {
+      "name": "EUDI Credential issuer",
+      "locale": "en"
+    },
+    {
+      "name": "EUDI Tõendi väljastaja",
+      "locale": "et"
+    },
+    {
+      "name": "EUDI эмитент доказательство",
+      "locale": "ru"
+    }
+  ],
+  "authorization_servers": [
+    "https://eudi-as.localhost:12443"
+  ]
+}
