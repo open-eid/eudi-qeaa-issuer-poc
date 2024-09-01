@@ -1,6 +1,5 @@
 package ee.ria.eudi.qeaa.issuer.service;
 
-import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.util.DefaultResourceRetriever;
 import com.nimbusds.jose.util.Resource;
@@ -26,10 +25,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.nimbusds.jose.jwk.source.RemoteJWKSet.DEFAULT_HTTP_SIZE_LIMIT;
+import static com.nimbusds.jose.jwk.source.JWKSourceBuilder.DEFAULT_HTTP_SIZE_LIMIT;
 import static com.nimbusds.oauth2.sdk.GrantType.AUTHORIZATION_CODE;
 import static com.nimbusds.oauth2.sdk.ResponseType.CODE;
 import static com.nimbusds.oauth2.sdk.WellKnownPathComposeStrategy.POSTFIX;
@@ -84,7 +84,7 @@ public class AuthorizationServerMetadataService {
         Issuer issuer = new Issuer(issuerUrl);
         OIDCProviderConfigurationRequest request = new OIDCProviderConfigurationRequest(issuer, POSTFIX);
         HTTPRequest httpRequest = request.toHTTPRequest();
-        httpRequest.setSSLSocketFactory(sslContext.getSocketFactory());
+        httpRequest.setSSLSocketFactory(getSslSocketFactory());
         HTTPResponse httpResponse = httpRequest.send();
         JSONObject contentAsJSONObject = httpResponse.getBodyAsJSONObject();
         AuthorizationServerMetadata metadata = AuthorizationServerMetadata.parse(contentAsJSONObject);
@@ -98,7 +98,7 @@ public class AuthorizationServerMetadataService {
             20000,
             DEFAULT_HTTP_SIZE_LIMIT,
             true,
-            sslContext.getSocketFactory());
+            getSslSocketFactory());
         Resource resource = rr.retrieveResource(metadata.getJWKSetURI().toURL());
         return JWKSet.parse(resource.getContent());
     }
@@ -116,8 +116,8 @@ public class AuthorizationServerMetadataService {
             throw new ServiceException("The PAR endpoint URI must not be null/empty");
         if (metadata.getJWKSetURI() == null || metadata.getJWKSetURI().toString().isBlank())
             throw new ServiceException("The JWK Set endpoint URI must not be null/empty");
-        if (!contains(metadata.getDPoPJWSAlgs(), JWSAlgorithm.ES256)) // TODO: Derive from issuer signing key
-            throw new ServiceException(String.format("Metadata DPoP token JWS algorithms can not be null and must contain only '%s'", JWSAlgorithm.ES256));
+        if (metadata.getDPoPJWSAlgs() == null || metadata.getDPoPJWSAlgs().isEmpty())
+            throw new ServiceException("Metadata DPoP token JWS algorithms can not be null");
         if (!contains(metadata.getCodeChallengeMethods(), CodeChallengeMethod.S256))
             throw new ServiceException(String.format("Metadata DPoP token JWS algorithms can not be null and must contain only '%s'", CodeChallengeMethod.S256));
         if (!contains(metadata.getResponseTypes(), CODE) || metadata.getResponseTypes().size() != 1)
@@ -126,5 +126,9 @@ public class AuthorizationServerMetadataService {
             throw new ServiceException(String.format("Metadata grant types can not be null and must contain: '%s'", AUTHORIZATION_CODE));
         if (!contains(metadata.getTokenEndpointAuthMethods(), new ClientAuthenticationMethod("attest_jwt_client_auth")))
             throw new ServiceException("Metadata token endpoint auth methods can not be null and must contain 'attest_jwt_client_auth'");
+    }
+
+    private SSLSocketFactory getSslSocketFactory() {
+        return sslContext == null ? null : sslContext.getSocketFactory();
     }
 }
