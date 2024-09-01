@@ -23,3 +23,43 @@ spring:
         eudi-issuer-ca:
           truststore:
             certificate: classpath:eudi-ca.localhost.crt
+
+eudi:
+  issuer:
+    base-url: https://eudi-issuer.localhost:13443
+    max-clock-skew: 5s
+    key-proof-expiry-time: 60s
+    dpop-expiry-time: 60s
+    c-nonce-expiry-time: 7d
+    credential:
+      encryption:
+        required: false
+        supported-algorithms:
+          - RSA-OAEP
+          - RSA-OAEP-256
+          - ECDH-ES
+          - ECDH-ES+A128KW
+          - ECDH-ES+A192KW
+          - ECDH-ES+A256KW
+        supported-encodings:
+          - A128GCM
+          - A192GCM
+          - A256GCM
+          - A128CBC-HS256
+          - A192CBC-HS384
+          - A256CBC-HS512
+      validity: 7d
+      max-batch-size: 5
+    metadata:
+      supported-locales:
+        - en
+        - et
+        - ru
+  as:
+    base-url: https://eudi-as.localhost:12443
+    metadata:
+      interval: PT24H
+      max-attempts: 1440
+      backoff-delay-milliseconds: 1000
+      backoff-max-delay-milliseconds: 60000
+      backoff-multiplier: 1.1

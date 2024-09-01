@@ -2,6 +2,7 @@ package ee.ria.eudi.qeaa.issuer.controller;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jose.jwk.Curve;
@@ -20,9 +21,8 @@ import com.nimbusds.oauth2.sdk.id.JWTID;
 import com.nimbusds.oauth2.sdk.util.singleuse.AlreadyUsedException;
 import com.nimbusds.openid.connect.sdk.Nonce;
 import ee.ria.eudi.qeaa.issuer.BaseTest;
+import ee.ria.eudi.qeaa.issuer.TestUtils;
 import ee.ria.eudi.qeaa.issuer.model.CredentialNonce;
-import ee.ria.eudi.qeaa.issuer.model.CredentialRequest;
-import ee.ria.eudi.qeaa.issuer.model.CredentialResponse;
 import ee.ria.eudi.qeaa.issuer.service.AuthorizationServerMetadataService;
 import ee.ria.eudi.qeaa.issuer.util.AccessTokenUtil;
 import ee.ria.eudi.qeaa.issuer.validation.AccessTokenValidator;
@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 
@@ -44,20 +45,24 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static ee.ria.eudi.qeaa.issuer.controller.CredentialController.CREDENTIAL_REQUEST_MAPPING;
 import static io.restassured.RestAssured.given;
 import static java.time.ZoneId.of;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
-
+@SpringBootTest(webEnvironment = RANDOM_PORT)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @TestMethodOrder(MethodOrderer.MethodName.class)
 class CredentialControllerTest extends BaseTest {
@@ -76,6 +81,16 @@ class CredentialControllerTest extends BaseTest {
     void setUpMockAsMetadata() {
         Issuer issuer = new Issuer("https://eudi-as.localhost");
         AuthorizationServerMetadata asMetadata = new AuthorizationServerMetadata(issuer);
+        asMetadata.setDPoPJWSAlgs(List.of(
+            JWSAlgorithm.RS256,
+            JWSAlgorithm.RS384,
+            JWSAlgorithm.RS512,
+            JWSAlgorithm.ES256,
+            JWSAlgorithm.ES384,
+            JWSAlgorithm.ES512,
+            JWSAlgorithm.PS256,
+            JWSAlgorithm.PS384,
+            JWSAlgorithm.PS512));
         Mockito.when(asMetadataService.getMetadata()).thenReturn(asMetadata);
         Mockito.when(asMetadataService.getJWKSet()).thenReturn(new JWKSet(asSigningKey.toPublicJWK()));
     }
@@ -110,6 +125,46 @@ class CredentialControllerTest extends BaseTest {
         MDoc mDoc = MDoc.Companion.fromCBORHex(response.credential());
         assertMsoMDoc(mDoc);
         assertIssuerSignedItems(mDoc);
+    }
+
+    @Test
+    void credentialRequest_WhenValidRequestWithMultipleKeyProofs_ReturnsHttp200WithMultipleIssuedCredentials() throws JOSEException {
+        SignedJWT accessToken = getSenderConstrainedAccessToken(walletSigningKey);
+        String token = accessToken.serialize();
+        String accessTokenHash = AccessTokenUtil.computeSHA256(token);
+        CredentialNonce cNonce = generateMockNonce(accessTokenHash);
+        SignedJWT dPoPProof = getDPoPProof(accessTokenHash);
+        List<ECKey> bindingKeys = IntStream.rangeClosed(0, 4)
+            .mapToObj(i -> TestUtils.generateECKey()).toList();
+        List<SignedJWT> keyProofs = bindingKeys.stream()
+            .map(key -> getJwtKeyProof(getJwtKeyProofClaims(cNonce.getNonce()), key))
+            .toList();
+        CredentialRequest credentialRequest = getCredentialRequest(keyProofs);
+
+        CredentialResponse response = given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "DPoP " + token)
+            .header("DPoP", dPoPProof.serialize())
+            .request().body(credentialRequest)
+            .when()
+            .post(CREDENTIAL_REQUEST_MAPPING)
+            .then()
+            .assertThat()
+            .contentType(APPLICATION_JSON_VALUE)
+            .statusCode(200)
+            .extract()
+            .as(CredentialResponse.class);
+
+        assertThat(response, notNullValue());
+        assertThat(response.credential(), nullValue());
+        assertThat(response.credentials(), notNullValue());
+        assertThat(response.credentials(), hasSize(5));
+        assertCNonce(response, accessTokenHash, cNonce);
+        IntStream.rangeClosed(0, 4).forEach(i -> {
+            MDoc mDoc = MDoc.Companion.fromCBORHex(response.credentials().get(i));
+            assertMsoMDoc(mDoc, bindingKeys.get(i));
+            assertIssuerSignedItems(mDoc);
+        });
     }
 
     @Test
@@ -248,7 +303,7 @@ class CredentialControllerTest extends BaseTest {
             .issueTime(new Date())
             .generate();
         SignedJWT accessToken = new SignedJWT(new JWSHeader.Builder(asSigningKeyJwsAlg)
-            .type(JOSEObjectType.JWT)
+            .type(new JOSEObjectType("at+jwt"))
             .build(), getAccessTokenClaims(Collections.emptyMap(), walletSigningKey.computeThumbprint().toString()));
         accessToken.sign(new ECDSASigner(invalidAccessTokenSigningKey));
         String token = accessToken.serialize();
@@ -1030,11 +1085,11 @@ class CredentialControllerTest extends BaseTest {
             .contentType(APPLICATION_JSON_VALUE)
             .statusCode(400)
             .body("error", equalTo("unsupported_credential_type"))
-            .body("error_description", equalTo("Unsupported credential type: unsupported_doctype"))
+            .body("error_description", equalTo("Unsupported credential doctype: unsupported_doctype"))
             .body("c_nonce", nullValue())
             .body("c_nonce_expires_in", nullValue());
 
-        assertErrorIsLogged("Service exception: Unsupported credential type: unsupported_doctype");
+        assertErrorIsLogged("Service exception: Unsupported credential doctype: unsupported_doctype");
     }
 
     @Test
@@ -1061,11 +1116,11 @@ class CredentialControllerTest extends BaseTest {
             .contentType(APPLICATION_JSON_VALUE)
             .statusCode(400)
             .body("error", equalTo("invalid_credential_request"))
-            .body("error_description", equalTo("Missing Key Proof"))
+            .body("error_description", equalTo("Missing key proof"))
             .body("c_nonce", nullValue())
             .body("c_nonce_expires_in", nullValue());
 
-        assertErrorIsLogged("Service exception: Missing Key Proof");
+        assertErrorIsLogged("Service exception: Missing key proof");
     }
 
     @Test
@@ -1124,11 +1179,11 @@ class CredentialControllerTest extends BaseTest {
             .contentType(APPLICATION_JSON_VALUE)
             .statusCode(400)
             .body("error", equalTo("invalid_proof"))
-            .body("error_description", equalTo("Invalid Key Proof"))
+            .body("error_description", equalTo("Invalid key proof"))
             .body("c_nonce", nullValue())
             .body("c_nonce_expires_in", nullValue());
 
-        assertErrorIsLogged("Service exception: Invalid Key Proof --> JOSE header typ (type) invalid-proof-type not allowed");
+        assertErrorIsLogged("Service exception: Invalid key proof --> JOSE header typ (type) invalid-proof-type not allowed");
     }
 
     @Test
@@ -1162,11 +1217,11 @@ class CredentialControllerTest extends BaseTest {
             .contentType(APPLICATION_JSON_VALUE)
             .statusCode(400)
             .body("error", equalTo("invalid_proof"))
-            .body("error_description", equalTo("Invalid Key Proof"))
+            .body("error_description", equalTo("Invalid key proof"))
             .body("c_nonce", nullValue())
             .body("c_nonce_expires_in", nullValue());
 
-        assertErrorIsLogged("Service exception: Invalid Key Proof --> Signed JWT rejected: Invalid signature");
+        assertErrorIsLogged("Service exception: Invalid key proof --> Signed JWT rejected: Invalid signature");
     }
 
     @Test
@@ -1194,11 +1249,11 @@ class CredentialControllerTest extends BaseTest {
             .contentType(APPLICATION_JSON_VALUE)
             .statusCode(400)
             .body("error", equalTo("invalid_proof"))
-            .body("error_description", equalTo("Invalid Key Proof"))
+            .body("error_description", equalTo("Invalid key proof"))
             .body("c_nonce", nullValue())
             .body("c_nonce_expires_in", nullValue());
 
-        assertErrorIsLogged("Service exception: Invalid Key Proof --> Missing JWS jwk header parameter");
+        assertErrorIsLogged("Service exception: Invalid key proof --> Missing JWS jwk header parameter");
     }
 
     @Test
@@ -1231,11 +1286,11 @@ class CredentialControllerTest extends BaseTest {
             .contentType(APPLICATION_JSON_VALUE)
             .statusCode(400)
             .body("error", equalTo("invalid_credential_request"))
-            .body("error_description", equalTo("Unsupported Key Proof type: unsupported_proof_type"))
+            .body("error_description", equalTo("Unsupported key proof type: unsupported_proof_type"))
             .body("c_nonce", nullValue())
             .body("c_nonce_expires_in", nullValue());
 
-        assertErrorIsLogged("Service exception: Unsupported Key Proof type: unsupported_proof_type");
+        assertErrorIsLogged("Service exception: Unsupported key proof type: unsupported_proof_type");
     }
 
     @Test
@@ -1269,11 +1324,11 @@ class CredentialControllerTest extends BaseTest {
             .contentType(APPLICATION_JSON_VALUE)
             .statusCode(400)
             .body("error", equalTo("invalid_proof"))
-            .body("error_description", equalTo("Key Proof expired"))
+            .body("error_description", equalTo("Key proof expired"))
             .body("c_nonce", nullValue())
             .body("c_nonce_expires_in", nullValue());
 
-        assertErrorIsLogged("Service exception: Key Proof expired");
+        assertErrorIsLogged("Service exception: Key proof expired");
     }
 
     @Test
@@ -1307,11 +1362,11 @@ class CredentialControllerTest extends BaseTest {
             .contentType(APPLICATION_JSON_VALUE)
             .statusCode(400)
             .body("error", equalTo("invalid_proof"))
-            .body("error_description", equalTo("Key Proof not yet valid"))
+            .body("error_description", equalTo("Key proof not yet valid"))
             .body("c_nonce", nullValue())
             .body("c_nonce_expires_in", nullValue());
 
-        assertErrorIsLogged("Service exception: Key Proof not yet valid");
+        assertErrorIsLogged("Service exception: Key proof not yet valid");
     }
 
     @Test
@@ -1342,11 +1397,11 @@ class CredentialControllerTest extends BaseTest {
             .contentType(APPLICATION_JSON_VALUE)
             .statusCode(400)
             .body("error", equalTo("invalid_proof"))
-            .body("error_description", equalTo("Invalid Key Proof"))
+            .body("error_description", equalTo("Invalid key proof"))
             .body("c_nonce", nullValue())
             .body("c_nonce_expires_in", nullValue());
 
-        assertErrorIsLogged("Service exception: Invalid Key Proof --> JWT iss claim has value https://invalid-issuer.localhost, must be https://eudi-wallet.localhost");
+        assertErrorIsLogged("Service exception: Invalid key proof --> JWT iss claim has value https://invalid-issuer.localhost, must be https://eudi-wallet.localhost");
     }
 
     @Test
@@ -1377,10 +1432,192 @@ class CredentialControllerTest extends BaseTest {
             .contentType(APPLICATION_JSON_VALUE)
             .statusCode(400)
             .body("error", equalTo("invalid_proof"))
-            .body("error_description", equalTo("Invalid Key Proof"))
+            .body("error_description", equalTo("Invalid key proof"))
             .body("c_nonce", nullValue())
             .body("c_nonce_expires_in", nullValue());
 
-        assertErrorIsLogged("Service exception: Invalid Key Proof --> JWT aud claim has value [https://invalid-audience.localhost], must be [https://eudi-issuer.localhost:13443]");
+        assertErrorIsLogged("Service exception: Invalid key proof --> JWT aud claim has value [https://invalid-audience.localhost], must be [https://eudi-issuer.localhost:13443]");
     }
+
+    @Test
+    void credentialRequest_WhenInvalidAccessTokenAuthorizationDetailsFormat_ReturnsHttp401() throws JOSEException {
+        SignedJWT accessToken = getSenderConstrainedAccessToken(
+            Map.of("authorization_details", List.of(Map.of(
+                "type", "openid_credential",
+                "format", "unsupported_format",
+                "doctype", "org.iso.18013.5.1.mDL"
+            ))),
+            walletSigningKey.computeThumbprint().toString());
+        String token = accessToken.serialize();
+        String accessTokenHash = AccessTokenUtil.computeSHA256(token);
+        CredentialNonce cNonce = generateMockNonce(accessTokenHash);
+        SignedJWT dPoPProof = getDPoPProof(accessTokenHash);
+        SignedJWT credentialJwtKeyProof = getJwtKeyProof(cNonce.getNonce());
+        CredentialRequest credentialRequest = getCredentialRequest(credentialJwtKeyProof);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "DPoP " + token)
+            .header("DPoP", dPoPProof.serialize())
+            .request().body(credentialRequest)
+            .when()
+            .post(CREDENTIAL_REQUEST_MAPPING)
+            .then()
+            .assertThat()
+            .contentType(APPLICATION_JSON_VALUE)
+            .statusCode(401)
+            .body("error", equalTo("invalid_token"))
+            .body("error_description", equalTo("Invalid access token"))
+            .body("c_nonce", nullValue())
+            .body("c_nonce_expires_in", nullValue());
+
+        assertErrorIsLogged("Service exception: Invalid access token --> Invalid access token authorization_details.format claim");
+    }
+
+    @Test
+    void credentialRequest_WhenInvalidAccessTokenAuthorizationDetailsDoctype_ReturnsHttp401() throws JOSEException {
+        SignedJWT accessToken = getSenderConstrainedAccessToken(
+            Map.of("authorization_details", List.of(Map.of(
+                "type", "openid_credential",
+                "format", "mso_mdoc",
+                "doctype", "unsupported_doctype"
+            ))),
+            walletSigningKey.computeThumbprint().toString());
+        String token = accessToken.serialize();
+        String accessTokenHash = AccessTokenUtil.computeSHA256(token);
+        CredentialNonce cNonce = generateMockNonce(accessTokenHash);
+        SignedJWT dPoPProof = getDPoPProof(accessTokenHash);
+        SignedJWT credentialJwtKeyProof = getJwtKeyProof(cNonce.getNonce());
+        CredentialRequest credentialRequest = getCredentialRequest(credentialJwtKeyProof);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "DPoP " + token)
+            .header("DPoP", dPoPProof.serialize())
+            .request().body(credentialRequest)
+            .when()
+            .post(CREDENTIAL_REQUEST_MAPPING)
+            .then()
+            .assertThat()
+            .contentType(APPLICATION_JSON_VALUE)
+            .statusCode(401)
+            .body("error", equalTo("invalid_token"))
+            .body("error_description", equalTo("Invalid access token"))
+            .body("c_nonce", nullValue())
+            .body("c_nonce_expires_in", nullValue());
+
+        assertErrorIsLogged("Service exception: Invalid access token --> Invalid access token authorization_details.doctype claim");
+    }
+
+    @Test
+    void credentialRequest_WhenInvalidAccessTokenAuthorizationDetailsCredentialConfigurationId_ReturnsHttp401() throws JOSEException {
+        SignedJWT accessToken = getSenderConstrainedAccessToken(
+            Map.of("authorization_details", List.of(Map.of(
+                "type", "openid_credential",
+                "credential_configuration_id", "org.iso.18013.5.1.mDL",
+                "format", "mso_mdoc",
+                "doctype", "org.iso.18013.5.1.mDL"
+            ))),
+            walletSigningKey.computeThumbprint().toString());
+        String token = accessToken.serialize();
+        String accessTokenHash = AccessTokenUtil.computeSHA256(token);
+        CredentialNonce cNonce = generateMockNonce(accessTokenHash);
+        SignedJWT dPoPProof = getDPoPProof(accessTokenHash);
+        SignedJWT credentialJwtKeyProof = getJwtKeyProof(cNonce.getNonce());
+        CredentialRequest credentialRequest = getCredentialRequest(credentialJwtKeyProof);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "DPoP " + token)
+            .header("DPoP", dPoPProof.serialize())
+            .request().body(credentialRequest)
+            .when()
+            .post(CREDENTIAL_REQUEST_MAPPING)
+            .then()
+            .assertThat()
+            .contentType(APPLICATION_JSON_VALUE)
+            .statusCode(401)
+            .body("error", equalTo("invalid_token"))
+            .body("error_description", equalTo("Invalid access token"))
+            .body("c_nonce", nullValue())
+            .body("c_nonce_expires_in", nullValue());
+
+        assertErrorIsLogged("Service exception: Invalid access token --> Invalid access token authorization_details.credential_configuration_id claim. Claims authorization_details.format and authorization_details.doctype must be null.");
+    }
+
+    @Test
+    void credentialRequest_WhenUnauthorizedCredentialRequestFormat_ReturnsHttp400() throws JOSEException {
+        SignedJWT accessToken = getSenderConstrainedAccessToken(
+            Map.of("authorization_details", List.of(Map.of(
+                "type", "openid_credential",
+                "credential_configuration_id", "org.iso.18013.5.1.mDL"
+            ))),
+            walletSigningKey.computeThumbprint().toString());
+        String token = accessToken.serialize();
+        String accessTokenHash = AccessTokenUtil.computeSHA256(token);
+        CredentialNonce cNonce = generateMockNonce(accessTokenHash);
+        SignedJWT dPoPProof = getDPoPProof(accessTokenHash);
+        SignedJWT credentialJwtKeyProof = getJwtKeyProof(cNonce.getNonce());
+        CredentialRequest credentialRequest = getCredentialRequest(credentialJwtKeyProof);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "DPoP " + token)
+            .header("DPoP", dPoPProof.serialize())
+            .request().body(credentialRequest)
+            .when()
+            .post(CREDENTIAL_REQUEST_MAPPING)
+            .then()
+            .assertThat()
+            .contentType(APPLICATION_JSON_VALUE)
+            .statusCode(400)
+            .body("error", equalTo("unsupported_credential_format"))
+            .body("error_description", equalTo("Credential format not authorized"))
+            .body("c_nonce", nullValue())
+            .body("c_nonce_expires_in", nullValue());
+
+        assertErrorIsLogged("Service exception: Credential format not authorized");
+    }
+
+    @Test
+    void credentialRequest_WhenUnauthorizedCredentialRequestCredentialIdentifier_ReturnsHttp400() throws JOSEException {
+        SignedJWT accessToken = getSenderConstrainedAccessToken(
+            Map.of("authorization_details", List.of(Map.of(
+                "type", "openid_credential",
+                "credential_configuration_id", "unauthorized_credential_configuration_id"
+            ))),
+            walletSigningKey.computeThumbprint().toString());
+        String token = accessToken.serialize();
+        String accessTokenHash = AccessTokenUtil.computeSHA256(token);
+        CredentialNonce cNonce = generateMockNonce(accessTokenHash);
+        SignedJWT dPoPProof = getDPoPProof(accessTokenHash);
+        SignedJWT credentialJwtKeyProof = getJwtKeyProof(cNonce.getNonce());
+
+        CredentialRequest credentialRequest = CredentialRequest.builder()
+            .credentialIdentifier("org.iso.18013.5.1.mDL")
+            .proof(CredentialRequest.Proof.builder()
+                .proofType("jwt")
+                .jwt(credentialJwtKeyProof.serialize())
+                .build())
+            .build();
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "DPoP " + token)
+            .header("DPoP", dPoPProof.serialize())
+            .request().body(credentialRequest)
+            .when()
+            .post(CREDENTIAL_REQUEST_MAPPING)
+            .then()
+            .assertThat()
+            .contentType(APPLICATION_JSON_VALUE)
+            .statusCode(400)
+            .body("error", equalTo("unsupported_credential_format"))
+            .body("error_description", equalTo("Credential configuration not authorized"))
+            .body("c_nonce", nullValue())
+            .body("c_nonce_expires_in", nullValue());
+
+        assertErrorIsLogged("Service exception: Credential configuration not authorized");
+    }
+
 }

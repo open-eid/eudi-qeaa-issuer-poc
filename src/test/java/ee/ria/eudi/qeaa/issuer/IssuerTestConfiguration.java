@@ -2,7 +2,6 @@ package ee.ria.eudi.qeaa.issuer;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
@@ -27,7 +26,7 @@ public class IssuerTestConfiguration {
 
     @Bean
     public JWSAlgorithm asSigningKeyJwsAlg(ECKey asSigningKey) {
-        return getJwsAlgorithm(asSigningKey.getCurve());
+        return TestUtils.getJwsAlgorithm(asSigningKey.getCurve());
     }
 
     @Bean
@@ -38,7 +37,7 @@ public class IssuerTestConfiguration {
 
     @Bean
     public JWSAlgorithm walletSigningKeyJwsAlg(ECKey walletSigningKey) {
-        return getJwsAlgorithm(walletSigningKey.getCurve());
+        return TestUtils.getJwsAlgorithm(walletSigningKey.getCurve());
     }
 
     @Bean
@@ -54,19 +53,5 @@ public class IssuerTestConfiguration {
             }
         }
         return issuerTrustedRootCAs;
-    }
-
-    public JWSAlgorithm getJwsAlgorithm(Curve curve) {
-        if (curve.equals(Curve.P_256)) {
-            return JWSAlgorithm.ES256;
-        } else if (curve.equals(Curve.SECP256K1)) {
-            return JWSAlgorithm.ES256K;
-        } else if (curve.equals(Curve.P_384)) {
-            return JWSAlgorithm.ES384;
-        } else if (curve.equals(Curve.P_521)) {
-            return JWSAlgorithm.ES512;
-        } else {
-            throw new IllegalArgumentException("Unsupported curve: " + curve.getName());
-        }
     }
 }

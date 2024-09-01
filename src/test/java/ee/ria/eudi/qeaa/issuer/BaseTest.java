@@ -1,6 +1,7 @@
 package ee.ria.eudi.qeaa.issuer;
 
 import COSE.AlgorithmID;
+import COSE.OneKey;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -13,19 +14,25 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.id.JWTID;
 import com.nimbusds.openid.connect.sdk.Nonce;
+import com.upokecenter.cbor.CBORObject;
 import ee.ria.eudi.qeaa.issuer.configuration.properties.IssuerProperties;
-import ee.ria.eudi.qeaa.issuer.model.CredentialNamespace;
+import ee.ria.eudi.qeaa.issuer.controller.CredentialRequest;
+import ee.ria.eudi.qeaa.issuer.controller.CredentialRequest.CredentialRequestBuilder;
+import ee.ria.eudi.qeaa.issuer.controller.CredentialRequest.CredentialResponseEncryption;
+import ee.ria.eudi.qeaa.issuer.controller.CredentialRequest.Proof;
+import ee.ria.eudi.qeaa.issuer.controller.CredentialResponse;
 import ee.ria.eudi.qeaa.issuer.model.CredentialNonce;
-import ee.ria.eudi.qeaa.issuer.model.CredentialRequest;
-import ee.ria.eudi.qeaa.issuer.model.CredentialResponse;
 import ee.ria.eudi.qeaa.issuer.repository.CredentialNonceRepository;
+import ee.ria.eudi.qeaa.issuer.service.CredentialNamespace;
 import id.walt.mdoc.COSECryptoProviderKeyInfo;
 import id.walt.mdoc.SimpleCOSECryptoProvider;
 import id.walt.mdoc.cose.COSESign1;
+import id.walt.mdoc.dataelement.MapElement;
 import id.walt.mdoc.dataelement.StringElement;
 import id.walt.mdoc.doc.MDoc;
 import id.walt.mdoc.issuersigned.IssuerSigned;
 import id.walt.mdoc.issuersigned.IssuerSignedItem;
+import id.walt.mdoc.mso.MSO;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.log.RequestLoggingFilter;
@@ -39,7 +46,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.Resource;
@@ -59,17 +65,17 @@ import java.util.stream.Collectors;
 
 import static ee.ria.eudi.qeaa.issuer.configuration.MDocConfiguration.KEY_ID_ISSUER;
 import static ee.ria.eudi.qeaa.issuer.controller.CredentialController.CREDENTIAL_REQUEST_MAPPING;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_BIRTH_DATE;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_DOCUMENT_NUMBER;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_DRIVING_PRIVILEGES;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_EXPIRY_DATE;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_FAMILY_NAME;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_GIVEN_NAME;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_ISSUE_DATE;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_ISSUING_AUTHORITY;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_ISSUING_COUNTRY;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_PORTRAIT;
-import static ee.ria.eudi.qeaa.issuer.model.CredentialAttribute.ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_BIRTH_DATE;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_DOCUMENT_NUMBER;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_DRIVING_PRIVILEGES;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_EXPIRY_DATE;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_FAMILY_NAME;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_GIVEN_NAME;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_ISSUE_DATE;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_ISSUING_AUTHORITY;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_ISSUING_COUNTRY;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_PORTRAIT;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN;
 import static io.restassured.config.RedirectConfig.redirectConfig;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -77,9 +83,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-@SpringBootTest(webEnvironment = RANDOM_PORT)
 @Import(IssuerTestConfiguration.class)
 @ActiveProfiles("test")
 public abstract class BaseTest extends BaseTestLoggingAssertion {
@@ -127,25 +131,41 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
         RestAssured.requestSpecification.port(port);
     }
 
-    protected void assertCNonce(CredentialResponse response, String accessTokenHash, CredentialNonce cNonce) {
+    protected void assertCNonce(CredentialResponse response, String accessTokenHash, CredentialNonce expectedCredentialNonce) {
+        assertCNonce(response.cNonce(), response.cNonceExpiresIn(), accessTokenHash, expectedCredentialNonce);
+    }
+
+    protected void assertCNonce(String cNonce, Long cNonceExpiresIn, String accessTokenHash, CredentialNonce expectedCredentialNonce) {
         CredentialNonce newCNonce = credentialNonceRepository.findByAccessTokenHash(accessTokenHash);
-        assertThat(response.cNonce(), notNullValue());
-        assertThat(response.cNonceExpiresIn(), notNullValue());
+        assertThat(cNonce, notNullValue());
+        assertThat(cNonceExpiresIn, notNullValue());
         assertThat(newCNonce, notNullValue());
         assertThat(newCNonce.getNonce(), notNullValue());
-        assertThat(newCNonce.getNonce(), not(equalTo(cNonce.getNonce())));
-        assertThat(newCNonce.getNonce(), equalTo(response.cNonce()));
+        assertThat(newCNonce.getNonce(), not(equalTo(expectedCredentialNonce.getNonce())));
+        assertThat(newCNonce.getNonce(), equalTo(cNonce));
         assertThat(newCNonce.getIssuedAt(), notNullValue());
-        assertThat(newCNonce.getIssuedAt(), greaterThan(cNonce.getIssuedAt()));
+        assertThat(newCNonce.getIssuedAt(), greaterThan(expectedCredentialNonce.getIssuedAt()));
     }
 
     protected void assertMsoMDoc(MDoc mDoc) {
+        assertMsoMDoc(mDoc, walletSigningKey);
+    }
+
+    @SneakyThrows
+    protected void assertMsoMDoc(MDoc mDoc, ECKey bindingKey) {
         assertThat(mDoc.verifyDocType(), is(true));
         assertThat(mDoc.verifyValidity(), is(true));
         assertThat(mDoc.verifyIssuerSignedItems(), is(true));
         SimpleCOSECryptoProvider issuerCryptoProvider = getIssuerCryptoProvider(mDoc);
         assertThat(mDoc.verifyCertificate(issuerCryptoProvider, KEY_ID_ISSUER), is(true));
         assertThat(mDoc.verifySignature(issuerCryptoProvider, KEY_ID_ISSUER), is(true));
+        MSO mso = mDoc.getMSO();
+        assertThat(mso, notNullValue());
+        assertThat(mso.getDeviceKeyInfo(), notNullValue());
+        MapElement deviceKey = mso.getDeviceKeyInfo().getDeviceKey();
+        assertThat(deviceKey, notNullValue());
+        PublicKey devicePublicKey = new OneKey(CBORObject.DecodeFromBytes(deviceKey.toCBOR())).AsPublicKey();
+        assertThat(devicePublicKey, equalTo(bindingKey.toPublicKey()));
     }
 
     protected SimpleCOSECryptoProvider getIssuerCryptoProvider(MDoc mDoc) {
@@ -201,7 +221,7 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
 
     protected SignedJWT getSenderConstrainedAccessToken(Map<String, Object> overrideClaims, String dPoPKeyThumbprint) throws JOSEException {
         SignedJWT accessToken = new SignedJWT(new JWSHeader.Builder(asSigningKeyJwsAlg)
-            .type(JOSEObjectType.JWT)
+            .type(new JOSEObjectType("at+jwt"))
             .build(), getAccessTokenClaims(overrideClaims, dPoPKeyThumbprint));
         accessToken.sign(new ECDSASigner(asSigningKey));
         return accessToken;
@@ -215,7 +235,12 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
             .claim(JWTClaimNames.AUDIENCE, "https://eudi-issuer.localhost:13443")
             .claim(JWTClaimNames.ISSUED_AT, issuedAt)
             .claim(JWTClaimNames.EXPIRATION_TIME, issuedAt + 60)
-            .claim("client_id", WALLET_CLIENT_ID);
+            .claim("client_id", WALLET_CLIENT_ID)
+            .claim("authorization_details", List.of(Map.of(
+                "type", "openid_credential",
+                "format", "mso_mdoc",
+                "doctype", "org.iso.18013.5.1.mDL"
+            )));
         overrideClaims.forEach(builder::claim);
         if (dPoPKeyThumbprint != null) {
             builder.claim("cnf", Map.of("jkt", dPoPKeyThumbprint));
@@ -243,16 +268,21 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
             .build();
     }
 
-    protected SignedJWT getJwtKeyProof(String cNonce) throws JOSEException {
+    protected SignedJWT getJwtKeyProof(String cNonce) {
         return getJwtKeyProof(getJwtKeyProofClaims(cNonce));
     }
 
-    protected SignedJWT getJwtKeyProof(JWTClaimsSet claimsSet) throws JOSEException {
-        SignedJWT jwtKeyProof = new SignedJWT(new JWSHeader.Builder(walletSigningKeyJwsAlg)
+    protected SignedJWT getJwtKeyProof(JWTClaimsSet claimsSet) {
+        return getJwtKeyProof(claimsSet, walletSigningKey);
+    }
+
+    @SneakyThrows
+    protected SignedJWT getJwtKeyProof(JWTClaimsSet claimsSet, ECKey ecKey) {
+        SignedJWT jwtKeyProof = new SignedJWT(new JWSHeader.Builder(TestUtils.getJwsAlgorithm(ecKey.getCurve()))
             .type(new JOSEObjectType("openid4vci-proof+jwt"))
-            .jwk(walletSigningKey.toPublicJWK())
+            .jwk(ecKey.toPublicJWK())
             .build(), claimsSet);
-        jwtKeyProof.sign(new ECDSASigner(walletSigningKey));
+        jwtKeyProof.sign(new ECDSASigner(ecKey));
         return jwtKeyProof;
     }
 
@@ -266,14 +296,37 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
     }
 
     protected CredentialRequest getCredentialRequest(SignedJWT credentialJwtKeyProof) {
-        CredentialRequest.Proof proof = CredentialRequest.Proof.builder()
-            .proofType("jwt")
-            .jwt(credentialJwtKeyProof.serialize())
-            .build();
-        return CredentialRequest.builder()
+        return getCredentialRequest(List.of(credentialJwtKeyProof));
+    }
+
+    protected CredentialRequest getCredentialRequest(SignedJWT credentialJwtKeyProof, CredentialResponseEncryption credentialResponseEncryption) {
+        return getCredentialRequest(List.of(credentialJwtKeyProof), credentialResponseEncryption);
+    }
+
+    protected CredentialRequest getCredentialRequest(List<SignedJWT> credentialJwtKeyProofs) {
+        return getCredentialRequest(credentialJwtKeyProofs, null);
+    }
+
+    protected CredentialRequest getCredentialRequest(List<SignedJWT> credentialJwtKeyProofs, CredentialResponseEncryption credentialResponseEncryption) {
+        CredentialRequestBuilder requestBuilder = CredentialRequest.builder()
             .format("mso_mdoc")
             .doctype("org.iso.18013.5.1.mDL")
-            .proof(proof)
-            .build();
+            .credentialResponseEncryption(credentialResponseEncryption);
+
+        List<Proof> keyProofs = getCredentialKeyProofs(credentialJwtKeyProofs);
+        if (keyProofs.size() == 1) {
+            return requestBuilder.proof(keyProofs.getFirst()).build();
+        } else {
+            return requestBuilder.proofs(keyProofs).build();
+        }
+    }
+
+    private List<Proof> getCredentialKeyProofs(List<SignedJWT> credentialJwtKeyProofs) {
+        return credentialJwtKeyProofs.stream()
+            .map(keyProof -> Proof.builder()
+                .proofType("jwt")
+                .jwt(keyProof.serialize())
+                .build())
+            .toList();
     }
 }
