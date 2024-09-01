@@ -1,10 +1,12 @@
 package ee.ria.eudi.qeaa.issuer.validation;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.proc.BadJOSEException;
+import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
 import com.nimbusds.jose.proc.JWSKeySelector;
 import com.nimbusds.jose.proc.JWSVerificationKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -27,6 +29,7 @@ import static ee.ria.eudi.qeaa.issuer.error.ErrorCode.INVALID_TOKEN;
 @Component
 @RequiredArgsConstructor
 public class AccessTokenValidator {
+    public static final JOSEObjectType JOSE_TYPE_AT_JWT = new JOSEObjectType("at+jwt");
     private final IssuerProperties issuerProperties;
     private final AuthorizationServerMetadataService asMetadataService;
     @Getter
@@ -36,9 +39,9 @@ public class AccessTokenValidator {
         try {
             JWKSet jwkSet = asMetadataService.getJWKSet();
             JWSAlgorithm jwsAlgorithm = accessToken.getHeader().getAlgorithm();
-            ImmutableJWKSet<SecurityContext> immutableJWKSet = new ImmutableJWKSet<>(jwkSet);
-            JWSKeySelector<SecurityContext> jwsKeySelector = new JWSVerificationKeySelector<>(jwsAlgorithm, immutableJWKSet);
+            JWSKeySelector<SecurityContext> jwsKeySelector = new JWSVerificationKeySelector<>(jwsAlgorithm, new ImmutableJWKSet<>(jwkSet));
             ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
+            jwtProcessor.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(JOSE_TYPE_AT_JWT));
             jwtProcessor.setJWSKeySelector(jwsKeySelector);
             jwtProcessor.setJWTClaimsSetVerifier(getClaimsVerifier());
             jwtProcessor.process(accessToken, null);
