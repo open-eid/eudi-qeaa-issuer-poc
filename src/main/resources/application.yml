@@ -63,7 +63,24 @@ eudi:
     dpop-expiry-time: 60s
     c-nonce-expiry-time: 7d
     credential:
+      encryption:
+        required: false
+        supported-algorithms:
+          - RSA-OAEP
+          - RSA-OAEP-256
+          - ECDH-ES
+          - ECDH-ES+A128KW
+          - ECDH-ES+A192KW
+          - ECDH-ES+A256KW
+        supported-encodings:
+          - A128GCM
+          - A192GCM
+          - A256GCM
+          - A128CBC-HS256
+          - A192CBC-HS384
+          - A256CBC-HS512
       validity: 7d
+      max-batch-size: 50
     metadata:
       supported-locales:
         - en

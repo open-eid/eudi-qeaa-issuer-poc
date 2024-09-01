@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum ErrorCode {
     SERVICE_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_REQUEST(HttpStatus.BAD_REQUEST),
+
     /**
      * OpenID4VCI Credential request
      **/
@@ -16,6 +18,7 @@ public enum ErrorCode {
     UNSUPPORTED_CREDENTIAL_FORMAT(HttpStatus.BAD_REQUEST),
     INVALID_PROOF(HttpStatus.BAD_REQUEST),
     INVALID_ENCRYPTION_PARAMETERS(HttpStatus.BAD_REQUEST),
+    CREDENTIAL_REQUEST_DENIED(HttpStatus.BAD_REQUEST),
     /**
      * RFC 9449 Sender constrained access token
      **/
