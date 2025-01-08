@@ -1594,7 +1594,7 @@ class CredentialControllerTest extends BaseTest {
         SignedJWT credentialJwtKeyProof = getJwtKeyProof(cNonce.getNonce());
 
         CredentialRequest credentialRequest = CredentialRequest.builder()
-            .credentialIdentifier("org.iso.18013.5.1.mDL")
+            .credentialConfigurationId("org.iso.18013.5.1.mDL")
             .proof(CredentialRequest.Proof.builder()
                 .proofType("jwt")
                 .jwt(credentialJwtKeyProof.serialize())

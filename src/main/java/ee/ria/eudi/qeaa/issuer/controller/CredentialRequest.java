@@ -9,7 +9,7 @@ import java.util.List;
 @Builder
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record CredentialRequest(
-    String credentialIdentifier,
+    String credentialConfigurationId,
     String format,
     String doctype,
     Proof proof,
