@@ -96,7 +96,7 @@ public class CredentialControllerEncryptionTest extends BaseTest {
         SignedJWT dPoPProof = getDPoPProof(accessTokenHash);
         SignedJWT credentialJwtKeyProof = getJwtKeyProof(cNonce.getNonce());
         CredentialResponseEncryption credentialResponseEncryption = CredentialResponseEncryption.builder()
-            .jwk(RSA_KEY.toPublicJWK().toJSONString())
+            .jwk(RSA_KEY.toPublicJWK().toJSONObject())
             .alg(alg)
             .enc("A128CBC-HS256")
             .build();
@@ -141,7 +141,7 @@ public class CredentialControllerEncryptionTest extends BaseTest {
         SignedJWT dPoPProof = getDPoPProof(accessTokenHash);
         SignedJWT credentialJwtKeyProof = getJwtKeyProof(cNonce.getNonce());
         CredentialResponseEncryption credentialResponseEncryption = CredentialResponseEncryption.builder()
-            .jwk(EC_KEY.toPublicJWK().toJSONString())
+            .jwk(EC_KEY.toPublicJWK().toJSONObject())
             .alg(alg)
             .enc("A128CBC-HS256")
             .build();
@@ -190,7 +190,7 @@ public class CredentialControllerEncryptionTest extends BaseTest {
             .map(key -> getJwtKeyProof(getJwtKeyProofClaims(cNonce.getNonce()), key))
             .toList();
         CredentialResponseEncryption credentialResponseEncryption = CredentialResponseEncryption.builder()
-            .jwk(EC_KEY.toPublicJWK().toJSONString())
+            .jwk(EC_KEY.toPublicJWK().toJSONObject())
             .alg(alg)
             .enc("A128CBC-HS256")
             .build();

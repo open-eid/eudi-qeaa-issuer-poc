@@ -24,6 +24,7 @@ import ee.ria.eudi.qeaa.issuer.validation.CredentialNonceValidator;
 import ee.ria.eudi.qeaa.issuer.validation.CredentialRequestValidator;
 import ee.ria.eudi.qeaa.issuer.validation.DPoPValidator;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeMap;
 import org.springframework.http.HttpHeaders;
@@ -106,9 +107,11 @@ public class CredentialController {
         }
     }
 
+    @SneakyThrows
     private String getEncryptedCredentialResponse(CredentialResponse credentialResponse, CredentialResponseEncryption responseEncryption) {
         Map<String, Object> claims = objectMapper.convertValue(credentialResponse, new TypeReference<>() {
         });
-        return JwtUtil.getEncryptedJWT(responseEncryption.jwk(), responseEncryption.alg(), responseEncryption.enc(), claims);
+        return JwtUtil.getEncryptedJWT(objectMapper.writeValueAsString(responseEncryption.jwk()),
+            responseEncryption.alg(), responseEncryption.enc(), claims);
     }
 }

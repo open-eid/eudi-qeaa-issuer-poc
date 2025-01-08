@@ -119,7 +119,7 @@ public class CredentialRequestValidator {
             if (responseEncryption == null) {
                 throw new ServiceException(INVALID_ENCRYPTION_PARAMETERS, "Missing credential response encryption request parameter");
             }
-            if (responseEncryption.jwk() == null || responseEncryption.jwk().isBlank()) {
+            if (responseEncryption.jwk() == null) {
                 throw new ServiceException(INVALID_ENCRYPTION_PARAMETERS, "Invalid credential response encryption key");
             }
             if (!encryptionProperties.supportedAlgorithms().contains(responseEncryption.alg())) {

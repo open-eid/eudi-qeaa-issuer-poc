@@ -27,7 +27,7 @@ public record CredentialRequest(
     @Builder
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public record CredentialResponseEncryption(
-        String jwk,
+        Object jwk,
         String alg,
         String enc) {
 
