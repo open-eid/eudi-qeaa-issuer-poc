@@ -1,0 +1,48 @@
+package ee.ria.eudi.qeaa.issuer.configuration;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import ee.ria.eudi.qeaa.issuer.model.Subject;
+import ee.ria.eudi.qeaa.issuer.repository.SubjectRepository;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.Resource;
+
+import java.io.IOException;
+import java.util.List;
+
+@Slf4j
+@Configuration
+@Profile("dev")
+@RequiredArgsConstructor
+public class SubjectDataLoader {
+    private final ObjectMapper objectMapper;
+    private final SubjectRepository subjectRepository;
+
+    @Value("${eudi.issuer.subject-test-data}")
+    private Resource subjectData;
+
+    @PostConstruct
+    public void loadSubjectData() throws IOException {
+        List<Subject> subjectList = objectMapper.readValue(subjectData.getInputStream(), new TypeReference<>() {
+        });
+        log.info("Loaded {} subjects: ", subjectList.size());
+        subjectList.forEach(subject -> log.info("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}",
+            subject.getSubject(),
+            subject.getFamilyName(),
+            subject.getGivenName(),
+            subject.getBirthDate(),
+            subject.getIssueDate(),
+            subject.getExpiryDate(),
+            subject.getIssuingCountry(),
+            subject.getIssuingAuthority(),
+            subject.getDocumentNumber(),
+            subject.getDrivingPrivileges(),
+            subject.getUnDistinguishingSign()));
+        subjectRepository.saveAll(subjectList);
+    }
+}

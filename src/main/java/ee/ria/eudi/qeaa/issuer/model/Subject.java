@@ -1,5 +1,8 @@
 package ee.ria.eudi.qeaa.issuer.model;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -18,6 +21,7 @@ import java.util.List;
 @Table(name = "subjects")
 @Data
 @NoArgsConstructor
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class Subject {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,6 +36,7 @@ public class Subject {
     private String issuingAuthority;
     private String documentNumber;
     @Lob
+    @JsonDeserialize(using = Base64DeserializerConverter.class)
     private byte[] portrait;
     @Convert(converter = StringListConverter.class)
     @Column(name = "driving_privileges", nullable = false)
