@@ -53,19 +53,30 @@ public class CredentialService {
     }
 
     private <T> String getMsoMDoc(T subject, TypeMap<T, MobileDrivingLicence> subjectMapper, PublicKey credentialBindingKey) {
-        MobileDrivingLicence mobileDrivingLicence = subjectMapper.map(subject);
+        MobileDrivingLicence mdl = subjectMapper.map(subject);
         List<ItemToSign> itemsToSign = new ArrayList<>();
-        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_FAMILY_NAME, new StringElement(mobileDrivingLicence.getFamilyName())));
-        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_GIVEN_NAME, new StringElement(mobileDrivingLicence.getGivenName())));
-        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_BIRTH_DATE, getFullDateElement(mobileDrivingLicence.getBirthDate())));
-        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_ISSUE_DATE, getFullDateElement(mobileDrivingLicence.getIssueDate())));
-        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_EXPIRY_DATE, getFullDateElement(mobileDrivingLicence.getExpiryDate())));
-        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_ISSUING_COUNTRY, new StringElement(mobileDrivingLicence.getIssuingCountry())));
-        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_ISSUING_AUTHORITY, new StringElement(mobileDrivingLicence.getIssuingAuthority())));
-        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_DOCUMENT_NUMBER, new StringElement(mobileDrivingLicence.getDocumentNumber())));
-        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_PORTRAIT, new ByteStringElement(mobileDrivingLicence.getPortrait())));
-        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_DRIVING_PRIVILEGES, new ListElement(mobileDrivingLicence.getDrivingPrivileges().stream().map(StringElement::new).toList())));
-        itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN, new StringElement(mobileDrivingLicence.getUnDistinguishingSign())));
+        if(mdl.getFamilyName() != null)
+            itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_FAMILY_NAME, new StringElement(mdl.getFamilyName())));
+        if(mdl.getGivenName() != null)
+            itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_GIVEN_NAME, new StringElement(mdl.getGivenName())));
+        if(mdl.getBirthDate() != null)
+            itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_BIRTH_DATE, getFullDateElement(mdl.getBirthDate())));
+        if(mdl.getIssueDate() != null)
+            itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_ISSUE_DATE, getFullDateElement(mdl.getIssueDate())));
+        if(mdl.getExpiryDate() != null)
+            itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_EXPIRY_DATE, getFullDateElement(mdl.getExpiryDate())));
+        if(mdl.getIssuingCountry() != null)
+            itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_ISSUING_COUNTRY, new StringElement(mdl.getIssuingCountry())));
+        if(mdl.getIssuingAuthority() != null)
+            itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_ISSUING_AUTHORITY, new StringElement(mdl.getIssuingAuthority())));
+        if(mdl.getDocumentNumber() != null)
+            itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_DOCUMENT_NUMBER, new StringElement(mdl.getDocumentNumber())));
+        if(mdl.getPortrait() != null)
+            itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_PORTRAIT, new ByteStringElement(mdl.getPortrait())));
+        if(mdl.getDrivingPrivileges() != null && !mdl.getDrivingPrivileges().isEmpty())
+            itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_DRIVING_PRIVILEGES, new ListElement(mdl.getDrivingPrivileges().stream().map(StringElement::new).toList())));
+        if(mdl.getUnDistinguishingSign() != null)
+            itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN, new StringElement(mdl.getUnDistinguishingSign())));
         return mDocService.getMDoc(CredentialDoctype.ORG_ISO_18013_5_1_MDL.getUri(), itemsToSign, credentialBindingKey).toCBORHex();
     }
 
