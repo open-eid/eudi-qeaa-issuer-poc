@@ -7,6 +7,6 @@ import lombok.Builder;
 public record ItemToSign(
     String nameSpace,
     String elementIdentifier,
-    DataElement<?> elementValue) {
+    DataElement elementValue) {
 
 }

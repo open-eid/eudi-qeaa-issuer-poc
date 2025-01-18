@@ -23,13 +23,9 @@
 
     <repositories>
         <repository>
-            <id>waltid</id>
+            <id>waltid-releases</id>
             <name>walt.id</name>
-            <url>https://maven.walt.id/repository/waltid/</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
+            <url>https://maven.waltid.dev/releases</url>
         </repository>
     </repositories>
 
@@ -86,9 +82,9 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>id.walt</groupId>
+            <groupId>id.walt.mdoc-credentials</groupId>
             <artifactId>waltid-mdoc-credentials-jvm</artifactId>
-            <version>1.0.2404041616-SNAPSHOT</version>
+            <version>0.10.0</version>
         </dependency>
         <dependency>
             <groupId>com.augustcellars.cose</groupId>

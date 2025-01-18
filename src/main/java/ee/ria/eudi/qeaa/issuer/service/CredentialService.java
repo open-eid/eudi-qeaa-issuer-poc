@@ -80,7 +80,7 @@ public class CredentialService {
         return mDocService.getMDoc(CredentialDoctype.ORG_ISO_18013_5_1_MDL.getUri(), itemsToSign, credentialBindingKey).toCBORHex();
     }
 
-    private ItemToSign getItemToSign(CredentialAttribute credentialAttribute, DataElement<?> elementValue) {
+    private ItemToSign getItemToSign(CredentialAttribute credentialAttribute, DataElement elementValue) {
         return ItemToSign.builder()
             .nameSpace(credentialAttribute.getNamespace().getUri())
             .elementIdentifier(credentialAttribute.getUri())

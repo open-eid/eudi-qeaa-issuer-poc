@@ -192,7 +192,7 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
     protected void assertIssuerSignedItems(MDoc mDoc) {
         List<IssuerSignedItem> issuerSignedItems = mDoc.getIssuerSignedItems(CredentialNamespace.ORG_ISO_18013_5_1.getUri());
         Map<String, Object> claims = issuerSignedItems.stream()
-            .collect(Collectors.toMap(i -> i.getElementIdentifier().getValue(), i -> i.getElementValue().getValue()));
+            .collect(Collectors.toMap(i -> i.getElementIdentifier().getValue(), i -> i.getElementValue().getInternalValue()));
 
         assertThat(claims.get(ORG_ISO_18013_5_1_FAMILY_NAME.getUri()), is("Männik"));
         assertThat(claims.get(ORG_ISO_18013_5_1_GIVEN_NAME.getUri()), is("Mari-Liis"));
