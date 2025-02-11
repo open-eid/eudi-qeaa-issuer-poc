@@ -1,5 +1,6 @@
 package ee.ria.eudi.qeaa.issuer.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -26,7 +27,7 @@ public class Subject {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String subject;
+    private String administrativeNumber;
     private String familyName;
     private String givenName;
     private LocalDate birthDate;
@@ -38,9 +39,15 @@ public class Subject {
     @Lob
     @JsonDeserialize(using = Base64DeserializerConverter.class)
     private byte[] portrait;
+    @Lob
+    @JsonDeserialize(using = Base64DeserializerConverter.class)
+    private byte[] signatureUsualMark;
     @Convert(converter = StringListConverter.class)
     @Column(name = "driving_privileges", nullable = false)
     private List<String> drivingPrivileges;
     private String unDistinguishingSign;
+    @Column(name = "age_over_18", nullable = false)
+    @JsonProperty("age_over_18")
+    private Boolean ageOver18;
 }
 

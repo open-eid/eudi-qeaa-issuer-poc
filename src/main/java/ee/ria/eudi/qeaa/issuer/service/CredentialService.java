@@ -1,6 +1,7 @@
 package ee.ria.eudi.qeaa.issuer.service;
 
 import ee.ria.eudi.qeaa.issuer.error.ServiceException;
+import id.walt.mdoc.dataelement.BooleanElement;
 import id.walt.mdoc.dataelement.ByteStringElement;
 import id.walt.mdoc.dataelement.DEFullDateMode;
 import id.walt.mdoc.dataelement.DataElement;
@@ -17,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static ee.ria.eudi.qeaa.issuer.error.ErrorCode.UNSUPPORTED_CREDENTIAL_FORMAT;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_ADMINISTRATIVE_NUMBER;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_AGE_OVER_18;
 import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_BIRTH_DATE;
 import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_DOCUMENT_NUMBER;
 import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_DRIVING_PRIVILEGES;
@@ -27,6 +30,7 @@ import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_
 import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_ISSUING_AUTHORITY;
 import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_ISSUING_COUNTRY;
 import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_PORTRAIT;
+import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_SIGNATURE_USUAL_MARK;
 import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN;
 
 /**
@@ -55,6 +59,8 @@ public class CredentialService {
     private <T> String getMsoMDoc(T subject, TypeMap<T, MobileDrivingLicence> subjectMapper, PublicKey credentialBindingKey) {
         MobileDrivingLicence mdl = subjectMapper.map(subject);
         List<ItemToSign> itemsToSign = new ArrayList<>();
+        if(mdl.getAdministrativeNumber() != null)
+            itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_ADMINISTRATIVE_NUMBER, new StringElement(mdl.getAdministrativeNumber())));
         if(mdl.getFamilyName() != null)
             itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_FAMILY_NAME, new StringElement(mdl.getFamilyName())));
         if(mdl.getGivenName() != null)
@@ -73,10 +79,14 @@ public class CredentialService {
             itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_DOCUMENT_NUMBER, new StringElement(mdl.getDocumentNumber())));
         if(mdl.getPortrait() != null)
             itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_PORTRAIT, new ByteStringElement(mdl.getPortrait())));
+        if(mdl.getSignatureUsualMark() != null)
+            itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_SIGNATURE_USUAL_MARK, new ByteStringElement(mdl.getSignatureUsualMark())));
         if(mdl.getDrivingPrivileges() != null && !mdl.getDrivingPrivileges().isEmpty())
             itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_DRIVING_PRIVILEGES, new ListElement(mdl.getDrivingPrivileges().stream().map(StringElement::new).toList())));
         if(mdl.getUnDistinguishingSign() != null)
             itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN, new StringElement(mdl.getUnDistinguishingSign())));
+        if(mdl.getAgeOver18() != null)
+            itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_AGE_OVER_18, new BooleanElement(mdl.getAgeOver18())));
         return mDocService.getMDoc(CredentialDoctype.ORG_ISO_18013_5_1_MDL.getUri(), itemsToSign, credentialBindingKey).toCBORHex();
     }
 

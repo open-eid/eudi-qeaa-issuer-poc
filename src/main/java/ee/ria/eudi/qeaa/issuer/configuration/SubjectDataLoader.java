@@ -31,8 +31,22 @@ public class SubjectDataLoader {
         List<Subject> subjectList = objectMapper.readValue(subjectData.getInputStream(), new TypeReference<>() {
         });
         log.info("Loaded {} subjects: ", subjectList.size());
-        subjectList.forEach(subject -> log.info("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}",
-            subject.getSubject(),
+        subjectList.forEach(subject -> log.info(
+            "Administrative number: {}\n" +
+                "Family name: {}\n" +
+                "Given name: {}\n" +
+                "Birth date: {}\n" +
+                "Issue date: {}\n" +
+                "Expiry date: {}\n" +
+                "Issuing country: {}\n" +
+                "Issuing authority: {}\n" +
+                "Document number: {}\n" +
+                "Portrait (size): {}\n" +
+                "SignatureUsualMark (size): {}\n" +
+                "Driving privileges: {}\n" +
+                "UN distinguishing sign: {}\n" +
+                "Age over 18: {}",
+            subject.getAdministrativeNumber(),
             subject.getFamilyName(),
             subject.getGivenName(),
             subject.getBirthDate(),
@@ -41,8 +55,11 @@ public class SubjectDataLoader {
             subject.getIssuingCountry(),
             subject.getIssuingAuthority(),
             subject.getDocumentNumber(),
+            subject.getPortrait().length,
+            subject.getSignatureUsualMark().length,
             subject.getDrivingPrivileges(),
-            subject.getUnDistinguishingSign()));
+            subject.getUnDistinguishingSign(),
+            subject.getAgeOver18()));
         subjectRepository.saveAll(subjectList);
     }
 }

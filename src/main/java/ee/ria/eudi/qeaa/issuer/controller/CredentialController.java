@@ -73,7 +73,7 @@ public class CredentialController {
     }
 
     private CredentialResponse getCredentialResponse(String accessTokenHash, JWTClaimsSet accessTokenClaims, List<PublicKey> bindingKeys) {
-        Subject subject = subjectRepository.findBySubject(accessTokenClaims.getSubject()).orElseThrow(() -> new ServiceException("Subject not found"));
+        Subject subject = subjectRepository.findByAdministrativeNumber(accessTokenClaims.getSubject()).orElseThrow(() -> new ServiceException("Subject not found"));
         TypeMap<Subject, MobileDrivingLicence> subjectToMobileDrivingLicenseMapper = new ModelMapper().createTypeMap(Subject.class, MobileDrivingLicence.class);
         CredentialNonce cNonce = getCredentialNonce(accessTokenHash);
         List<String> credentials = bindingKeys.stream()

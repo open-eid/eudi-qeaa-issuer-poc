@@ -11,6 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public final class MobileDrivingLicence {
+    private String administrativeNumber;
     private String familyName;
     private String givenName;
     private LocalDate birthDate;
@@ -20,6 +21,8 @@ public final class MobileDrivingLicence {
     private String issuingAuthority;
     private String documentNumber;
     private byte[] portrait;
+    private byte[] signatureUsualMark;
     private List<String> drivingPrivileges;
     private String unDistinguishingSign;
+    private Boolean ageOver18;
 }
