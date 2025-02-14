@@ -32,7 +32,6 @@ import java.text.ParseException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static ee.ria.eudi.qeaa.issuer.error.ErrorCode.INVALID_CREDENTIAL_REQUEST;

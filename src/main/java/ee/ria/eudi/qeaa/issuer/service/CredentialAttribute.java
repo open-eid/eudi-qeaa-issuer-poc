@@ -6,10 +6,13 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum CredentialAttribute {
-    ORG_ISO_18013_5_1_ADMINISTRATIVE_NUMBER(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "administrative_number", true),
+    ORG_ISO_18013_5_1_ADMINISTRATIVE_NUMBER(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "administrative_number", false),
     ORG_ISO_18013_5_1_FAMILY_NAME(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "family_name", true),
+    ORG_ISO_18013_5_1_FAMILY_NAME_NATIONAL_CHARACTER(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "family_name_national_character", false),
     ORG_ISO_18013_5_1_GIVEN_NAME(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "given_name", true),
+    ORG_ISO_18013_5_1_GIVEN_NAME_NATIONAL_CHARACTER(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "given_name_national_character", false),
     ORG_ISO_18013_5_1_BIRTH_DATE(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "birth_date", true),
+    ORG_ISO_18013_5_1_BIRTH_PLACE(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "birth_place", false),
     ORG_ISO_18013_5_1_ISSUE_DATE(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "issue_date", true),
     ORG_ISO_18013_5_1_EXPIRY_DATE(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "expiry_date", true),
     ORG_ISO_18013_5_1_ISSUING_COUNTRY(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "issuing_country", true),
@@ -18,8 +21,8 @@ public enum CredentialAttribute {
     ORG_ISO_18013_5_1_PORTRAIT(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "portrait", true),
     ORG_ISO_18013_5_1_DRIVING_PRIVILEGES(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "driving_privileges", true),
     ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "un_distinguishing_sign", true),
-    ORG_ISO_18013_5_1_SIGNATURE_USUAL_MARK(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "signature_usual_mark", true),
-    ORG_ISO_18013_5_1_AGE_OVER_18(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "age_over_18", true);
+    ORG_ISO_18013_5_1_SIGNATURE_USUAL_MARK(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "signature_usual_mark", false),
+    ORG_ISO_18013_5_1_AGE_OVER_18(CredentialDoctype.ORG_ISO_18013_5_1_MDL, CredentialNamespace.ORG_ISO_18013_5_1, "age_over_18", false);
 
     private final CredentialDoctype doctype;
     private final CredentialNamespace namespace;

@@ -34,8 +34,11 @@ public class SubjectDataLoader {
         subjectList.forEach(subject -> log.info(
             "Administrative number: {}\n" +
                 "Family name: {}\n" +
+                "Family name national character: {}\n" +
                 "Given name: {}\n" +
+                "Given name national character: {}\n" +
                 "Birth date: {}\n" +
+                "Birth place: {}\n" +
                 "Issue date: {}\n" +
                 "Expiry date: {}\n" +
                 "Issuing country: {}\n" +
@@ -48,8 +51,11 @@ public class SubjectDataLoader {
                 "Age over 18: {}",
             subject.getAdministrativeNumber(),
             subject.getFamilyName(),
+            subject.getFamilyNameNationalCharacter(),
             subject.getGivenName(),
+            subject.getGivenNameNationalCharacter(),
             subject.getBirthDate(),
+            subject.getBirthPlace(),
             subject.getIssueDate(),
             subject.getExpiryDate(),
             subject.getIssuingCountry(),

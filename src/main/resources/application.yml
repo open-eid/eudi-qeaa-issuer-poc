@@ -57,7 +57,7 @@ management:
 
 eudi:
   issuer:
-    #subject-test-data: classpath:subject-data.json
+    subject-test-data: classpath:subject-data.json
     base-url: https://eudi-issuer.localhost:13443
     max-clock-skew: 5s
     key-proof-expiry-time: 60s

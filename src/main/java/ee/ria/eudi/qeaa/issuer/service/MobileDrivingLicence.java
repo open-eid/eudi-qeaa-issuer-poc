@@ -13,8 +13,11 @@ import java.util.List;
 public final class MobileDrivingLicence {
     private String administrativeNumber;
     private String familyName;
+    private String familyNameNationalCharacter;
     private String givenName;
+    private String givenNameNationalCharacter;
     private LocalDate birthDate;
+    private String birthPlace;
     private LocalDate issueDate;
     private LocalDate expiryDate;
     private String issuingCountry;
@@ -22,7 +25,7 @@ public final class MobileDrivingLicence {
     private String documentNumber;
     private byte[] portrait;
     private byte[] signatureUsualMark;
-    private List<String> drivingPrivileges;
+    private List<DrivingPrivilege> drivingPrivileges;
     private String unDistinguishingSign;
     private Boolean ageOver18;
 }
