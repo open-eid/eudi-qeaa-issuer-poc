@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     SERVICE_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_REQUEST(HttpStatus.BAD_REQUEST),
+    SUBJECT_NOT_FOUND(HttpStatus.BAD_REQUEST),
 
     /**
      * OpenID4VCI Credential request

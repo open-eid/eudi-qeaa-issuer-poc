@@ -40,6 +40,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+import static ee.ria.eudi.qeaa.issuer.error.ErrorCode.SUBJECT_NOT_FOUND;
 import static ee.ria.eudi.qeaa.issuer.service.CredentialFormat.MSO_MDOC;
 
 @RestController
@@ -73,7 +74,7 @@ public class CredentialController {
     }
 
     private CredentialResponse getCredentialResponse(String accessTokenHash, JWTClaimsSet accessTokenClaims, List<PublicKey> bindingKeys) {
-        Subject subject = subjectRepository.findByAdministrativeNumber(accessTokenClaims.getSubject()).orElseThrow(() -> new ServiceException("Subject not found"));
+        Subject subject = subjectRepository.findByAdministrativeNumber(accessTokenClaims.getSubject()).orElseThrow(() -> new ServiceException(SUBJECT_NOT_FOUND, "Subject not found"));
         TypeMap<Subject, MobileDrivingLicence> subjectToMobileDrivingLicenseMapper = new ModelMapper().createTypeMap(Subject.class, MobileDrivingLicence.class);
         CredentialNonce cNonce = getCredentialNonce(accessTokenHash);
         List<String> credentials = bindingKeys.stream()
