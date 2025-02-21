@@ -40,6 +40,7 @@ services:
   eudi-issuer:
     image: eudi-qeaa-issuer-poc:latest
     environment:
+      - spring.profiles.active=dev
       - spring.ssl.bundle.pem.eudi-issuer.keystore.certificate=file:/var/certs/eudi-issuer/eudi-issuer.localhost.crt
       - spring.ssl.bundle.pem.eudi-issuer.keystore.private-key=file:/var/certs/eudi-issuer/eudi-issuer.localhost.key
       - spring.ssl.bundle.pem.eudi-issuer.truststore.certificate=file:/var/certs/eudi-ca/eudi-ca.localhost.crt
