@@ -12,11 +12,13 @@ import id.walt.mdoc.dataelement.MapKey;
 import id.walt.mdoc.dataelement.StringElement;
 import kotlinx.datetime.LocalDate;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.modelmapper.TypeMap;
 import org.springframework.stereotype.Service;
 
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -104,18 +106,39 @@ public class CredentialService {
 
     private ListElement getDrivingPrivilegeItem(MobileDrivingLicence mdl) {
         return new ListElement(mdl.getDrivingPrivileges().stream()
-            .map(dp -> new MapElement(Map.of(
-                new MapKey("vehicle_category_code"), new StringElement(dp.getVehicleCategoryCode()),
-                new MapKey("issue_date"), getFullDateElement(dp.getIssueDate()),
-                new MapKey("expiry_date"), getFullDateElement(dp.getExpiryDate()),
-                new MapKey("codes"), new ListElement(dp.getCodes().stream()
-                    .map(c -> new MapElement(Map.of(
-                        new MapKey("code"), new StringElement(c.getCode()),
-                        new MapKey("sign"), new StringElement(c.getSign()),
-                        new MapKey("value"), new StringElement(c.getValue())))
-                    ).toList()
-                ))))
+            .map(dp -> {
+                Map<MapKey, DataElement> dpMap = new HashMap<>();
+                dpMap.put(new MapKey("vehicle_category_code"), new StringElement(dp.getVehicleCategoryCode()));
+
+                if (dp.getIssueDate() != null) {
+                    dpMap.put(new MapKey("issue_date"), getFullDateElement(dp.getIssueDate()));
+                }
+
+                if (dp.getExpiryDate() != null) {
+                    dpMap.put(new MapKey("expiry_date"), getFullDateElement(dp.getExpiryDate()));
+                }
+
+                if(dp.getCodes() != null && !dp.getCodes().isEmpty()) {
+                    dpMap.put(new MapKey("codes"), new ListElement(dp.getCodes().stream()
+                        .map(CredentialService::getCode)
+                        .toList()));
+                }
+
+                return new MapElement(dpMap);
+            })
             .toList());
+    }
+
+    private static MapElement getCode(DrivingPrivilege.Code c) {
+        Map<MapKey, DataElement> codeMap = new HashMap<>();
+        codeMap.put(new MapKey("code"), new StringElement(c.getCode()));
+        if (c.getSign() != null) {
+            codeMap.put(new MapKey("sign"), new StringElement(c.getSign()));
+        }
+        if (c.getValue() != null) {
+            codeMap.put(new MapKey("value"), new StringElement(c.getValue()));
+        }
+        return new MapElement(codeMap);
     }
 
     private ItemToSign getItemToSign(CredentialAttribute credentialAttribute, DataElement elementValue) {
