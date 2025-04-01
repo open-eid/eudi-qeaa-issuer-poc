@@ -27,6 +27,11 @@
             <name>walt.id</name>
             <url>https://maven.waltid.dev/releases</url>
         </repository>
+        <repository>
+            <id>waltid-snapshots</id>
+            <name>walt.id</name>
+            <url>https://maven.waltid.dev/snapshots</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -84,12 +89,12 @@
         <dependency>
             <groupId>id.walt.mdoc-credentials</groupId>
             <artifactId>waltid-mdoc-credentials-jvm</artifactId>
-            <version>0.11.0</version>
+            <version>0.12.1</version><!-- TODO: Use 0.14.0 when fixed https://github.com/walt-id/waltid-identity/pull/862#issuecomment-2768640147 -->
         </dependency>
         <dependency>
-            <groupId>com.augustcellars.cose</groupId>
+            <groupId>org.cose</groupId>
             <artifactId>cose-java</artifactId>
-            <version>1.1.0</version>
+            <version>1.1.1-WALT-SNAPSHOT</version><!-- TODO: Remove dependency when fixed https://github.com/walt-id/waltid-identity/pull/862#issuecomment-2768640147 -->
         </dependency>
         <dependency>
             <groupId>com.upokecenter</groupId>

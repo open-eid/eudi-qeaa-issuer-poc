@@ -1,6 +1,14 @@
 package ee.ria.eudi.qeaa.issuer.service;
 
+import com.nimbusds.openid.connect.sdk.Nonce;
+import ee.ria.eudi.qeaa.issuer.configuration.properties.IssuerProperties;
+import ee.ria.eudi.qeaa.issuer.controller.CredentialResponse;
 import ee.ria.eudi.qeaa.issuer.error.ServiceException;
+import ee.ria.eudi.qeaa.issuer.model.CredentialNonce;
+import ee.ria.eudi.qeaa.issuer.model.CredentialStatus;
+import ee.ria.eudi.qeaa.issuer.model.Subject;
+import ee.ria.eudi.qeaa.issuer.repository.CredentialNonceRepository;
+import ee.ria.eudi.qeaa.issuer.repository.SubjectRepository;
 import id.walt.mdoc.dataelement.BooleanElement;
 import id.walt.mdoc.dataelement.ByteStringElement;
 import id.walt.mdoc.dataelement.DEFullDateMode;
@@ -12,16 +20,19 @@ import id.walt.mdoc.dataelement.MapKey;
 import id.walt.mdoc.dataelement.StringElement;
 import kotlinx.datetime.LocalDate;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
+import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeMap;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.PublicKey;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static ee.ria.eudi.qeaa.issuer.error.ErrorCode.SUBJECT_NOT_FOUND;
 import static ee.ria.eudi.qeaa.issuer.error.ErrorCode.UNSUPPORTED_CREDENTIAL_FORMAT;
 import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_ADMINISTRATIVE_NUMBER;
 import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_5_1_AGE_OVER_18;
@@ -55,16 +66,45 @@ import static ee.ria.eudi.qeaa.issuer.service.CredentialAttribute.ORG_ISO_18013_
 @RequiredArgsConstructor
 public class CredentialService {
     private final MDocService mDocService;
+    private final SubjectRepository subjectRepository;
+    private final CredentialStatusService credentialStatusService;
+    private final CredentialNonceRepository credentialNonceRepository;
+    private final IssuerProperties.Issuer issuerProperties;
 
-    public <T> String getMobileDrivingLicence(CredentialFormat credentialFormat, T subject, TypeMap<T, MobileDrivingLicence> subjectMapper, PublicKey credentialBindingKey) {
+    @Transactional
+    public CredentialResponse createMobileDrivingLicence(CredentialFormat credentialFormat, String accessTokenSubject, String accessTokenHash, List<PublicKey> bindingKeys) {
+        Subject subject = subjectRepository.findByAdministrativeNumber(accessTokenSubject).orElseThrow(() -> new ServiceException(SUBJECT_NOT_FOUND, "Subject not found"));
+        TypeMap<Subject, MobileDrivingLicence> subjectToMobileDrivingLicenseMapper = new ModelMapper().createTypeMap(Subject.class, MobileDrivingLicence.class);
+        CredentialNonce cNonce = getCredentialNonce(accessTokenHash);
+        CredentialStatus credentialStatus = credentialStatusService.createCredentialStatus(subject);
+
+        List<String> credentials = bindingKeys.stream()
+            .map(bindingKey -> getMobileDrivingLicence(credentialFormat, subject, subjectToMobileDrivingLicenseMapper, bindingKey, credentialStatus))
+            .toList();
+        CredentialResponse.CredentialResponseBuilder builder = CredentialResponse
+            .builder()
+            .cNonce(cNonce.getNonce())
+            .cNonceExpiresIn(issuerProperties.cNonceExpiryTime().toSeconds());
+        return credentials.size() == 1 ? builder.credential(credentials.getFirst()).build() : builder.credentials(credentials).build();
+    }
+
+    public <T> String getMobileDrivingLicence(CredentialFormat credentialFormat, T subject, TypeMap<T, MobileDrivingLicence> subjectMapper, PublicKey credentialBindingKey, CredentialStatus credentialStatus) {
         if (credentialFormat == CredentialFormat.MSO_MDOC) {
-            return getMsoMDoc(subject, subjectMapper, credentialBindingKey);
+            return getMsoMDoc(subject, subjectMapper, credentialBindingKey, credentialStatus);
         } else {
             throw new ServiceException(UNSUPPORTED_CREDENTIAL_FORMAT, "Unsupported credential format");
         }
     }
 
-    private <T> String getMsoMDoc(T subject, TypeMap<T, MobileDrivingLicence> subjectMapper, PublicKey credentialBindingKey) {
+    private CredentialNonce getCredentialNonce(String accessTokenHash) {
+        return credentialNonceRepository.save(CredentialNonce.builder()
+            .nonce(new Nonce().getValue())
+            .issuedAt(Instant.now())
+            .accessTokenHash(accessTokenHash)
+            .build());
+    }
+
+    private <T> String getMsoMDoc(T subject, TypeMap<T, MobileDrivingLicence> subjectMapper, PublicKey credentialBindingKey, CredentialStatus credentialStatus) {
         MobileDrivingLicence mdl = subjectMapper.map(subject);
         List<ItemToSign> itemsToSign = new ArrayList<>();
         if (mdl.getAdministrativeNumber() != null)
@@ -101,7 +141,7 @@ public class CredentialService {
             itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN, new StringElement(mdl.getUnDistinguishingSign())));
         if (mdl.getAgeOver18() != null)
             itemsToSign.add(getItemToSign(ORG_ISO_18013_5_1_AGE_OVER_18, new BooleanElement(mdl.getAgeOver18())));
-        return mDocService.getMDoc(CredentialDoctype.ORG_ISO_18013_5_1_MDL.getUri(), itemsToSign, credentialBindingKey).toCBORHex();
+        return mDocService.getMDoc(CredentialDoctype.ORG_ISO_18013_5_1_MDL.getUri(), itemsToSign, credentialBindingKey, credentialStatus).toCBORHex();
     }
 
     private ListElement getDrivingPrivilegeItem(MobileDrivingLicence mdl) {
@@ -118,7 +158,7 @@ public class CredentialService {
                     dpMap.put(new MapKey("expiry_date"), getFullDateElement(dp.getExpiryDate()));
                 }
 
-                if(dp.getCodes() != null && !dp.getCodes().isEmpty()) {
+                if (dp.getCodes() != null && !dp.getCodes().isEmpty()) {
                     dpMap.put(new MapKey("codes"), new ListElement(dp.getCodes().stream()
                         .map(CredentialService::getCode)
                         .toList()));
@@ -127,18 +167,6 @@ public class CredentialService {
                 return new MapElement(dpMap);
             })
             .toList());
-    }
-
-    private static MapElement getCode(DrivingPrivilege.Code c) {
-        Map<MapKey, DataElement> codeMap = new HashMap<>();
-        codeMap.put(new MapKey("code"), new StringElement(c.getCode()));
-        if (c.getSign() != null) {
-            codeMap.put(new MapKey("sign"), new StringElement(c.getSign()));
-        }
-        if (c.getValue() != null) {
-            codeMap.put(new MapKey("value"), new StringElement(c.getValue()));
-        }
-        return new MapElement(codeMap);
     }
 
     private ItemToSign getItemToSign(CredentialAttribute credentialAttribute, DataElement elementValue) {
@@ -151,5 +179,17 @@ public class CredentialService {
 
     private FullDateElement getFullDateElement(java.time.LocalDate date) {
         return new FullDateElement(new LocalDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth()), DEFullDateMode.full_date_str);
+    }
+
+    private static MapElement getCode(DrivingPrivilege.Code c) {
+        Map<MapKey, DataElement> codeMap = new HashMap<>();
+        codeMap.put(new MapKey("code"), new StringElement(c.getCode()));
+        if (c.getSign() != null) {
+            codeMap.put(new MapKey("sign"), new StringElement(c.getSign()));
+        }
+        if (c.getValue() != null) {
+            codeMap.put(new MapKey("value"), new StringElement(c.getValue()));
+        }
+        return new MapElement(codeMap);
     }
 }

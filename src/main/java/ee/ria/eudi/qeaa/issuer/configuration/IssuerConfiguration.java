@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
 
@@ -33,6 +34,7 @@ import java.util.Locale;
 @EnableScheduling
 @EnableRetry
 @ConfigurationPropertiesScan
+@EnableTransactionManagement
 public class IssuerConfiguration {
 
     @Bean

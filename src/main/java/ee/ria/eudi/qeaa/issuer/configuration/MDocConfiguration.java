@@ -1,8 +1,8 @@
 package ee.ria.eudi.qeaa.issuer.configuration;
 
-import COSE.AlgorithmID;
 import id.walt.mdoc.COSECryptoProviderKeyInfo;
 import id.walt.mdoc.SimpleCOSECryptoProvider;
+import org.cose.java.AlgorithmID;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

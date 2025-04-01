@@ -1,7 +1,5 @@
 package ee.ria.eudi.qeaa.issuer;
 
-import COSE.AlgorithmID;
-import COSE.OneKey;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -28,7 +26,7 @@ import id.walt.mdoc.COSECryptoProviderKeyInfo;
 import id.walt.mdoc.SimpleCOSECryptoProvider;
 import id.walt.mdoc.cose.COSESign1;
 import id.walt.mdoc.dataelement.MapElement;
-import id.walt.mdoc.dataelement.StringElement;
+import id.walt.mdoc.dataelement.MapKey;
 import id.walt.mdoc.doc.MDoc;
 import id.walt.mdoc.issuersigned.IssuerSigned;
 import id.walt.mdoc.issuersigned.IssuerSignedItem;
@@ -40,6 +38,8 @@ import io.restassured.filter.log.ResponseLoggingFilter;
 import kotlinx.datetime.LocalDate;
 import lombok.SneakyThrows;
 import org.bouncycastle.util.encoders.Hex;
+import org.cose.java.AlgorithmID;
+import org.cose.java.OneKey;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -194,15 +194,15 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
         Map<String, Object> claims = issuerSignedItems.stream()
             .collect(Collectors.toMap(i -> i.getElementIdentifier().getValue(), i -> i.getElementValue().getInternalValue()));
 
-        assertThat(claims.get(ORG_ISO_18013_5_1_FAMILY_NAME.getUri()), is("Männik"));
+        assertThat(claims.get(ORG_ISO_18013_5_1_FAMILY_NAME.getUri()), is("Mannik"));
         assertThat(claims.get(ORG_ISO_18013_5_1_GIVEN_NAME.getUri()), is("Mari-Liis"));
         assertThat(claims.get(ORG_ISO_18013_5_1_BIRTH_DATE.getUri()), is(LocalDate.Companion.parse("1979-12-24", LocalDate.Formats.INSTANCE.getISO())));
         assertThat(claims.get(ORG_ISO_18013_5_1_ISSUE_DATE.getUri()), is(LocalDate.Companion.parse("2020-12-30", LocalDate.Formats.INSTANCE.getISO())));
-        assertThat(claims.get(ORG_ISO_18013_5_1_EXPIRY_DATE.getUri()), is(LocalDate.Companion.parse("2028-12-30", LocalDate.Formats.INSTANCE.getISO())));
+        assertThat(claims.get(ORG_ISO_18013_5_1_EXPIRY_DATE.getUri()), is(LocalDate.Companion.parse("2030-12-30", LocalDate.Formats.INSTANCE.getISO())));
         assertThat(claims.get(ORG_ISO_18013_5_1_ISSUING_COUNTRY.getUri()), is("EE"));
         assertThat(claims.get(ORG_ISO_18013_5_1_ISSUING_AUTHORITY.getUri()), is("ARK"));
-        assertThat(claims.get(ORG_ISO_18013_5_1_DOCUMENT_NUMBER.getUri()), is("ET000000"));
-        assertThat((List<String>) claims.get(ORG_ISO_18013_5_1_DRIVING_PRIVILEGES.getUri()), Matchers.containsInRelativeOrder(new StringElement("A"), new StringElement("B")));
+        assertThat(claims.get(ORG_ISO_18013_5_1_DOCUMENT_NUMBER.getUri()), is("ET000001"));
+        assertThat(((List<MapElement>) claims.get(ORG_ISO_18013_5_1_DRIVING_PRIVILEGES.getUri())).stream().map(MapElement::getValue).map(s -> s.get(new MapKey("vehicle_category_code")).getInternalValue()).toList(), Matchers.contains("B", "C"));
         assertThat(claims.get(ORG_ISO_18013_5_1_UN_DISTINGUISHING_SIGN.getUri()), is("EST"));
         assertThat(claims.get(ORG_ISO_18013_5_1_PORTRAIT.getUri()), is(Hex.decode(subjectPortrait.getContentAsString(StandardCharsets.UTF_8))));
     }

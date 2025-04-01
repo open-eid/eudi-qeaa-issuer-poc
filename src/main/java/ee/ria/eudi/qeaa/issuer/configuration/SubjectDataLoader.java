@@ -17,7 +17,7 @@ import java.util.List;
 
 @Slf4j
 @Configuration
-@Profile("dev")
+@Profile({"dev", "test"})
 @RequiredArgsConstructor
 public class SubjectDataLoader {
     private final ObjectMapper objectMapper;

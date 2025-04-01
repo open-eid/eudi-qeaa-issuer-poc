@@ -1,0 +1,4 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Tue Apr 01 18:28:17 EEST 2025
+@default-walt-custom-C\:\\Nortal\\EUDI\\eudi-poc\\eudi-qeaa-issuer-poc/.m2/repository/.lastUpdated=1743521297611
+C\:\\Nortal\\EUDI\\eudi-poc\\eudi-qeaa-issuer-poc/.m2/repository/.error=Could not transfer artifact org.cose\:cose-java\:pom\:1.1.1-WALT-SNAPSHOT from/to walt-custom (C\:\\Nortal\\EUDI\\eudi-poc\\eudi-qeaa-issuer-poc/.m2/repository)\: Cannot access C\:\\Nortal\\EUDI\\eudi-poc\\eudi-qeaa-issuer-poc/.m2/repository with type default using the available connector factories\: BasicRepositoryConnectorFactory

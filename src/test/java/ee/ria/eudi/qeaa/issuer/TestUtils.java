@@ -1,6 +1,5 @@
 package ee.ria.eudi.qeaa.issuer;
 
-import COSE.OneKey;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
@@ -14,6 +13,7 @@ import id.walt.mdoc.mso.MSO;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
+import org.cose.java.OneKey;
 
 import java.security.PublicKey;
 import java.util.Objects;

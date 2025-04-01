@@ -8,6 +8,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -54,5 +55,7 @@ public class Subject {
     @Column(name = "age_over_18", nullable = false)
     @JsonProperty("age_over_18")
     private Boolean ageOver18;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "subject", fetch = FetchType.EAGER)
+    private List<CredentialStatus> credentialStatuses;
 }
 

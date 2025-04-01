@@ -1,19 +1,24 @@
 package ee.ria.eudi.qeaa.issuer.service;
 
 
-import COSE.OneKey;
 import ee.ria.eudi.qeaa.issuer.configuration.properties.IssuerProperties;
+import ee.ria.eudi.qeaa.issuer.model.CredentialStatus;
 import id.walt.mdoc.SimpleCOSECryptoProvider;
 import id.walt.mdoc.dataelement.DataElement;
 import id.walt.mdoc.dataelement.MapElement;
+import id.walt.mdoc.dataelement.NumberElement;
+import id.walt.mdoc.dataelement.StringElement;
 import id.walt.mdoc.doc.MDoc;
 import id.walt.mdoc.doc.MDocBuilder;
+import id.walt.mdoc.doc.Status;
+import id.walt.mdoc.doc.StatusListInfo;
 import id.walt.mdoc.mso.DeviceKeyInfo;
 import id.walt.mdoc.mso.ValidityInfo;
 import kotlinx.datetime.Clock;
 import kotlinx.datetime.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.cose.java.OneKey;
 import org.springframework.stereotype.Service;
 
 import java.security.PublicKey;
@@ -33,12 +38,20 @@ public class MDocService {
     private final SimpleCOSECryptoProvider issuerCryptoProvider;
     private final IssuerProperties.Issuer issuerProperties;
 
-    protected MDoc getMDoc(String docType, List<ItemToSign> itemsToSign, PublicKey deviceKey) {
+    private static Status getStatusElement(CredentialStatus credentialStatus) {
+        NumberElement idx = new NumberElement(credentialStatus.getStatusIndex());
+        StringElement uri = new StringElement(credentialStatus.getStatusListUri());
+        StatusListInfo statusListInfo = new StatusListInfo(idx, uri, null);
+        return new Status(null, statusListInfo);
+    }
+
+    protected MDoc getMDoc(String docType, List<ItemToSign> itemsToSign, PublicKey deviceKey, CredentialStatus credentialStatus) {
         ValidityInfo validityInfo = getValidityInfo();
         DeviceKeyInfo deviceKeyInfo = getDeviceKeyInfo(deviceKey);
         MDocBuilder mDocBuilder = new MDocBuilder(docType);
         itemsToSign.forEach(i -> mDocBuilder.addItemToSign(i.nameSpace(), i.elementIdentifier(), i.elementValue()));
-        return mDocBuilder.sign(validityInfo, deviceKeyInfo, issuerCryptoProvider, KEY_ID_ISSUER);
+        Status status = getStatusElement(credentialStatus);
+        return mDocBuilder.sign(validityInfo, deviceKeyInfo, issuerCryptoProvider, KEY_ID_ISSUER, status);
     }
 
     private ValidityInfo getValidityInfo() {
